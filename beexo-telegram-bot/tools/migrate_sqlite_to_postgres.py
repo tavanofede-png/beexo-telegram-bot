@@ -1,3 +1,263 @@
+"""One-shot migration utility: copy data from local SQLite to a Postgres DATABASE_URL.
+
+Usage:
+  python migrate_sqlite_to_postgres.py --sqlite-path ./beexo-telegram-bot/beexy_history.db --database-url "postgres://..."
+
+The script copies tables: interactions, kb_docs (uses rowid as id), reports, reminders.
+It preserves numeric IDs when possible and advances Postgres sequences.
+"""
+from __future__ import annotations
+
+import argparse
+import sqlite3
+import sys
+import traceback
+from typing import Iterable, List, Tuple
+
+
+def chunked(iterable: Iterable, size: int):
+    it = iter(iterable)
+    while True:
+        chunk = []
+        try:
+            for _ in range(size):
+                chunk.append(next(it))
+        except StopIteration:
+            if chunk:
+                yield chunk
+            break
+        yield chunk
+
+
+def migrate(sqlite_path: str, database_url: str) -> None:
+    try:
+        import psycopg2
+        import psycopg2.extras
+    except Exception as e:
+        print("psycopg2 is required. Install with: pip install psycopg2-binary")
+        raise
+
+    print(f"Opening SQLite DB: {sqlite_path}")
+    sconn = sqlite3.connect(sqlite_path)
+    sconn.row_factory = sqlite3.Row
+    scur = sconn.cursor()
+
+    print(f"Connecting to Postgres: {database_url.split('@')[-1] if '@' in database_url else database_url}")
+    pconn = psycopg2.connect(database_url)
+    pcur = pconn.cursor()
+
+    # Create Postgres schema if missing
+    print("Ensuring Postgres tables exist...")
+    pcur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS interactions (
+            id BIGSERIAL PRIMARY KEY,
+            user_id BIGINT,
+            user_name TEXT,
+            question TEXT,
+            answer TEXT,
+            created_at TIMESTAMP
+        )
+        """
+    )
+    pcur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS kb_docs (
+            id BIGSERIAL PRIMARY KEY,
+            title TEXT,
+            content TEXT,
+            source TEXT
+        )
+        """
+    )
+    pcur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS reports (
+            id BIGSERIAL PRIMARY KEY,
+            reporter_id BIGINT,
+            reporter_name TEXT,
+            reported_id BIGINT,
+            reported_name TEXT,
+            chat_id BIGINT,
+            reason TEXT,
+            created_at TIMESTAMP,
+            handled INTEGER DEFAULT 0
+        )
+        """
+    )
+    pcur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS reminders (
+            id BIGSERIAL PRIMARY KEY,
+            user_id BIGINT,
+            user_name TEXT,
+            chat_id BIGINT,
+            text TEXT,
+            scheduled_at BIGINT,
+            created_at TIMESTAMP,
+            fired INTEGER DEFAULT 0
+        )
+        """
+    )
+    pconn.commit()
+
+    def copy_table(select_sql: str, params: Tuple, insert_sql: str, transform_row=lambda r: r):
+        scur.execute(select_sql, params or ())
+        rows = scur.fetchall()
+        if not rows:
+            print(f"No rows to copy for query: {select_sql}")
+            return 0
+        total = 0
+        # Use execute_values for faster bulk insert
+        vals: List[Tuple] = [tuple(transform_row(r)) for r in rows]
+        psycopg2.extras.execute_values(pcur, insert_sql, vals, page_size=500)
+        pconn.commit()
+        total = len(vals)
+        print(f"Copied {total} rows.")
+        return total
+
+    print("Copying interactions...")
+    try:
+        # SQLite interactions may have id column
+        try:
+            scur.execute("SELECT id, user_id, user_name, question, answer, created_at FROM interactions")
+            _ = scur.fetchone()
+            scur.execute("SELECT id, user_id, user_name, question, answer, created_at FROM interactions")
+            rows = scur.fetchall()
+            if rows:
+                vals = []
+                for r in rows:
+                    vals.append((r[0], r[1], r[2], r[3], r[4], r[5]))
+                psycopg2.extras.execute_values(
+                    pcur,
+                    "INSERT INTO interactions (id, user_id, user_name, question, answer, created_at) VALUES %s ON CONFLICT (id) DO NOTHING",
+                    vals,
+                    template=None,
+                    page_size=500,
+                )
+                pconn.commit()
+                print(f"Copied {len(vals)} interactions (preserved ids)")
+        except sqlite3.OperationalError:
+            # Fallback: try selecting without id
+            scur.execute("SELECT user_id, user_name, question, answer, created_at FROM interactions")
+            rows = scur.fetchall()
+            if rows:
+                vals = [tuple(r) for r in rows]
+                psycopg2.extras.execute_values(
+                    pcur,
+                    "INSERT INTO interactions (user_id, user_name, question, answer, created_at) VALUES %s",
+                    vals,
+                    page_size=500,
+                )
+                pconn.commit()
+                print(f"Copied {len(vals)} interactions (new ids)")
+    except Exception:
+        print("Failed to copy interactions:")
+        traceback.print_exc()
+
+    print("Copying kb_docs (using rowid as id)...")
+    try:
+        scur.execute("SELECT rowid, title, content, source FROM kb_docs")
+        rows = scur.fetchall()
+        if rows:
+            vals = [(r[0], r[1], r[2], r[3]) for r in rows]
+            psycopg2.extras.execute_values(
+                pcur,
+                "INSERT INTO kb_docs (id, title, content, source) VALUES %s ON CONFLICT (id) DO NOTHING",
+                vals,
+                page_size=500,
+            )
+            pconn.commit()
+            print(f"Copied {len(vals)} kb_docs (preserved rowid as id)")
+    except Exception:
+        print("Failed to copy kb_docs:")
+        traceback.print_exc()
+
+    print("Copying reports...")
+    try:
+        scur.execute("SELECT id, reporter_id, reporter_name, reported_id, reported_name, chat_id, reason, created_at, handled FROM reports")
+        rows = scur.fetchall()
+        if rows:
+            vals = [tuple(r) for r in rows]
+            psycopg2.extras.execute_values(
+                pcur,
+                "INSERT INTO reports (id, reporter_id, reporter_name, reported_id, reported_name, chat_id, reason, created_at, handled) VALUES %s ON CONFLICT (id) DO NOTHING",
+                vals,
+                page_size=500,
+            )
+            pconn.commit()
+            print(f"Copied {len(vals)} reports")
+    except Exception:
+        print("Failed to copy reports (maybe table missing):")
+        traceback.print_exc()
+
+    print("Copying reminders...")
+    try:
+        scur.execute("SELECT id, user_id, user_name, chat_id, text, scheduled_at, created_at, fired FROM reminders")
+        rows = scur.fetchall()
+        if rows:
+            vals = [tuple(r) for r in rows]
+            psycopg2.extras.execute_values(
+                pcur,
+                "INSERT INTO reminders (id, user_id, user_name, chat_id, text, scheduled_at, created_at, fired) VALUES %s ON CONFLICT (id) DO NOTHING",
+                vals,
+                page_size=500,
+            )
+            pconn.commit()
+            print(f"Copied {len(vals)} reminders")
+    except Exception:
+        print("Failed to copy reminders (maybe table missing):")
+        traceback.print_exc()
+
+    # Advance sequences
+    try:
+        print("Advancing Postgres sequences to max(id) values...")
+        seqs = [
+            ("interactions",),
+            ("kb_docs",),
+            ("reports",),
+            ("reminders",),
+        ]
+        for name, in seqs:
+            try:
+                pcur.execute(
+                    "SELECT setval(pg_get_serial_sequence(%s, 'id'), COALESCE((SELECT MAX(id) FROM " + name + "), 1), true);"
+                )
+            except Exception:
+                # best-effort; ignore failures
+                pass
+        pconn.commit()
+    except Exception:
+        print("Failed to advance sequences:")
+        traceback.print_exc()
+
+    print("Migration complete.")
+    try:
+        sconn.close()
+    except Exception:
+        pass
+    try:
+        pconn.close()
+    except Exception:
+        pass
+
+
+def main(argv: List[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Migrate SQLite DB to Postgres")
+    parser.add_argument("--sqlite-path", default="./beexo-telegram-bot/beexy_history.db")
+    parser.add_argument("--database-url", required=True)
+    args = parser.parse_args(argv)
+
+    try:
+        migrate(args.sqlite_path, args.database_url)
+        return 0
+    except Exception:
+        traceback.print_exc()
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 #!/usr/bin/env python3
 """Migrate data from local SQLite (`beexy_history.db`) to a Postgres `DATABASE_URL`.
 
