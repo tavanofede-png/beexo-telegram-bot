@@ -1,0 +1,5 @@
+python-telegram-bot[job-queue]
+python-dotenv
+Pillow
+httpx
+psycopg2-binary

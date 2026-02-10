@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeeXy Bot — Documentación Completa</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #12121a;
+    --bg3: #1a1a28;
+    --accent: #f7b731;
+    --accent2: #ffd166;
+    --green: #00e676;
+    --red: #ff5252;
+    --blue: #448aff;
+    --purple: #bb86fc;
+    --cyan: #03dac6;
+    --text: #e8e8f0;
+    --text2: #a0a0b8;
+    --border: #2a2a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @media print {
+    body { background: white; color: #1a1a1a; }
+    .page-break { page-break-before: always; }
+    .cover { background: linear-gradient(135deg, #1a1a2e, #0a0a1a) !important; }
+    section { break-inside: avoid; }
+  }
+
+  /* ========== COVER ========== */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1028 50%, #0a1828 100%);
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(247,183,49,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .cover .bee-icon {
+    font-size: 100px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 30px rgba(247,183,49,0.4));
+  }
+  .cover h1 {
+    font-size: 64px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -2px;
+    margin-bottom: 12px;
+  }
+  .cover .subtitle {
+    font-size: 22px;
+    color: var(--text2);
+    font-weight: 300;
+    margin-bottom: 40px;
+  }
+  .cover .meta {
+    font-size: 14px;
+    color: var(--text2);
+    opacity: 0.6;
+  }
+  .cover .tags {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    margin-top: 30px;
+  }
+  .cover .tag {
+    padding: 6px 16px;
+    background: rgba(247,183,49,0.1);
+    border: 1px solid rgba(247,183,49,0.2);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  /* ========== LAYOUT ========== */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 40px;
+  }
+
+  /* ========== TOC ========== */
+  .toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 60px;
+  }
+  .toc h2 {
+    font-size: 28px;
+    margin-bottom: 24px;
+    color: var(--accent);
+  }
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+  .toc li {
+    counter-increment: toc;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+  }
+  .toc li:last-child { border-bottom: none; }
+  .toc li::before {
+    content: counter(toc, decimal-leading-zero);
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .toc a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--accent); }
+
+  /* ========== SECTIONS ========== */
+  section {
+    margin-bottom: 60px;
+  }
+  section h2 {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section h2 .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    background: rgba(247,183,49,0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  section h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 32px 0 12px;
+    color: var(--accent2);
+  }
+  section h4 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--cyan);
+  }
+  section p {
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  .dim { color: var(--text2); }
+
+  /* ========== CARDS ========== */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .card.accent-left {
+    border-left: 4px solid var(--accent);
+  }
+  .card.green-left {
+    border-left: 4px solid var(--green);
+  }
+  .card.blue-left {
+    border-left: 4px solid var(--blue);
+  }
+  .card.purple-left {
+    border-left: 4px solid var(--purple);
+  }
+  .card.red-left {
+    border-left: 4px solid var(--red);
+  }
+  .card.cyan-left {
+    border-left: 4px solid var(--cyan);
+  }
+  .card h4 { margin-top: 0; }
+
+  /* ========== GRID ========== */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  /* ========== TABLE ========== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  th {
+    background: var(--bg3);
+    color: var(--accent);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ========== CODE ========== */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--cyan);
+  }
+  pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  /* ========== BADGES ========== */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .badge.gold { background: rgba(247,183,49,0.15); color: var(--accent); }
+  .badge.green { background: rgba(0,230,118,0.12); color: var(--green); }
+  .badge.blue { background: rgba(68,138,255,0.12); color: var(--blue); }
+  .badge.purple { background: rgba(187,134,252,0.12); color: var(--purple); }
+  .badge.red { background: rgba(255,82,82,0.12); color: var(--red); }
+  .badge.cyan { background: rgba(3,218,198,0.12); color: var(--cyan); }
+
+  /* ========== FLOW DIAGRAM ========== */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .flow .step {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+  }
+  .flow .arrow { color: var(--accent); font-weight: bold; }
+
+  /* ========== STATS ========== */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .stat-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-box .num {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-box .label {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 6px;
+  }
+
+  /* ========== TIMELINE ========== */
+  .timeline { position: relative; padding-left: 30px; margin: 16px 0; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline .event {
+    position: relative;
+    padding: 12px 0;
+  }
+  .timeline .event::before {
+    content: '';
+    position: absolute;
+    left: -26px; top: 18px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .timeline .event .time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .timeline .event .desc {
+    font-size: 15px;
+    margin-top: 4px;
+  }
+
+  /* ========== SEPARATOR ========== */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 768px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .cover h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ################################################################## -->
+<!-- PORTADA -->
+<!-- ################################################################## -->
+<div class="cover">
+  <div class="bee-icon">🐝</div>
+  <h1>BeeXy Bot</h1>
+  <p class="subtitle">Documentación Técnica Completa</p>
+  <p class="dim">Bot de Telegram para la comunidad de Beexo Wallet</p>
+  <div class="tags">
+    <span class="tag">Python 3.14</span>
+    <span class="tag">python-telegram-bot</span>
+    <span class="tag">Groq AI (Llama 3.3 70B)</span>
+    <span class="tag">FLUX Image Gen</span>
+    <span class="tag">CoinGecko</span>
+    <span class="tag">DuckDuckGo</span>
+  </div>
+  <p class="meta" style="margin-top:40px">Febrero 2026 · v2.0</p>
+</div>
+
+<div class="container">
+
+<!-- ################################################################## -->
+<!-- TABLA DE CONTENIDOS -->
+<!-- ################################################################## -->
+<div class="toc">
+  <h2>📑 Índice</h2>
+  <ol>
+    <li><a href="#overview">Visión General del Proyecto</a></li>
+    <li><a href="#architecture">Arquitectura &amp; Stack Tecnológico</a></li>
+    <li><a href="#files">Estructura de Archivos</a></li>
+    <li><a href="#config">Configuración &amp; Variables de Entorno</a></li>
+    <li><a href="#commands">Comandos del Bot</a></li>
+    <li><a href="#ai">Módulo de Inteligencia Artificial</a></li>
+    <li><a href="#images">Módulo de Imágenes (Búsqueda + Generación)</a></li>
+    <li><a href="#antiscam">Sistema Anti-Scam</a></li>
+    <li><a href="#scheduled">Tareas Programadas (Jobs)</a></li>
+    <li><a href="#memes">Sistema de Memes (200 memes + en vivo)</a></li>
+    <li><a href="#trivias">Trivias &amp; Encuestas</a></li>
+    <li><a href="#welcome">Bienvenida a Nuevos Miembros</a></li>
+    <li><a href="#emotions">Reacciones Emocionales + GIFs</a></li>
+    <li><a href="#reminders">Recordatorios Personales</a></li>
+    <li><a href="#crypto-summary">Resumen Diario de Cripto</a></li>
+    <li><a href="#ephemerides">Efemérides Cripto</a></li>
+    <li><a href="#fun-facts">Datos Curiosos Semanales</a></li>
+    <li><a href="#news">Noticias Semanales</a></li>
+    <li><a href="#message-flow">Flujo de Mensajes (on_message)</a></li>
+    <li><a href="#apis">APIs Externas Utilizadas</a></li>
+    <li><a href="#schedule-summary">Cronograma Completo de Actividad</a></li>
+  </ol>
+</div>
+
+<!-- ################################################################## -->
+<!-- 01 - OVERVIEW -->
+<!-- ################################################################## -->
+<section id="overview">
+  <h2><span class="num">01</span> Visión General del Proyecto</h2>
+
+  <p><strong>BeeXy</strong> (pronunciado <em>"Bixi"</em>) es un bot de Telegram diseñado para la comunidad de <strong>Beexo Wallet</strong>, una billetera de criptomonedas de autocustodia. El bot funciona como asistente integral del grupo, combinando:</p>
+
+  <div class="grid-2">
+    <div class="card accent-left">
+      <h4>🤖 Inteligencia Artificial</h4>
+      <p class="dim">Responde preguntas sobre cualquier tema usando Groq (Llama 3.3 70B) con acceso a datos de mercado en tiempo real y búsqueda web.</p>
+    </div>
+    <div class="card green-left">
+      <h4>🎨 Generación de Imágenes</h4>
+      <p class="dim">Genera imágenes con IA (Pollinations FLUX) y busca fotos en la web (DuckDuckGo), con detección inteligente del tipo de pedido.</p>
+    </div>
+    <div class="card blue-left">
+      <h4>🛡 Seguridad Anti-Scam</h4>
+      <p class="dim">Detecta automáticamente keywords de estafas comunes en cripto y alerta al grupo con mensajes preventivos.</p>
+    </div>
+    <div class="card purple-left">
+      <h4>📊 Contenido Automático</h4>
+      <p class="dim">Envía memes, trivias, resúmenes de mercado, noticias, efemérides y datos curiosos de forma programada.</p>
+    </div>
+  </div>
+
+  <h3>Estadísticas del Bot</h3>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="num">200</div>
+      <div class="label">Memes con ilustraciones</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">55</div>
+      <div class="label">Trivias cripto</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">20</div>
+      <div class="label">Datos curiosos</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">10</div>
+      <div class="label">Efemérides históricas</div>
+    </div>
+  </div>
+
+  <p>El bot está diseñado para mantener activa una comunidad cripto hispanohablante con tono argentino natural, enviando contenido de valor las 24 horas de forma autónoma.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 02 - ARCHITECTURE -->
+<!-- ################################################################## -->
+<section id="architecture">
+  <h2><span class="num">02</span> Arquitectura &amp; Stack Tecnológico</h2>
+
+  <h3>Tecnologías Principales</h3>
+  <table>
+    <thead>
+      <tr><th>Componente</th><th>Tecnología</th><th>Uso</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Lenguaje</td><td><code>Python 3.14</code></td><td>Todo el backend del bot</td></tr>
+      <tr><td>Framework Telegram</td><td><code>python-telegram-bot 22.6</code></td><td>API de Telegram + Job Queue (APScheduler)</td></tr>
+      <tr><td>IA / LLM</td><td><code>Groq API</code> — Llama 3.3 70B</td><td>Chat IA, enhancement de prompts, optimización de búsquedas</td></tr>
+      <tr><td>Generación de imágenes</td><td><code>Pollinations.ai</code> + FLUX model</td><td>Generación de imágenes con IA (gratis, sin API key)</td></tr>
+      <tr><td>Búsqueda web/imágenes</td><td><code>DuckDuckGo Search</code></td><td>Búsqueda de texto, noticias e imágenes</td></tr>
+      <tr><td>Precios cripto</td><td><code>CoinGecko API</code></td><td>Precios en tiempo real, tendencias, market cap</td></tr>
+      <tr><td>HTTP Client</td><td><code>httpx</code></td><td>Peticiones async a APIs externas</td></tr>
+      <tr><td>Generación de memes</td><td><code>Pillow (PIL)</code></td><td>Creación de imágenes .png con texto y escenas</td></tr>
+      <tr><td>Variables de entorno</td><td><code>python-dotenv</code></td><td>Carga segura de tokens y configuración</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Diagrama de Arquitectura</h3>
+  <div class="card">
+    <pre>
+┌─────────────────────────────────────────────────────────┐
+│                    TELEGRAM (Grupo)                      │
+│  Usuarios ←→ BeeXy Bot                                  │
+└──────────────────────┬──────────────────────────────────┘
+                       │ python-telegram-bot (polling)
+                       ▼
+┌─────────────────── bot.py ──────────────────────────────┐
+│  Handlers: Comandos | Mensajes | Eventos de grupo       │
+│  Job Queue: Morning | Night | Memes | Trivias | News... │
+├─────────────┬───────────┬───────────┬───────────────────┤
+│ ai_chat.py  │image_tools│crypto_data│ crypto_news_meme  │
+│             │  .py      │  .py      │  .py              │
+├─────────────┼───────────┼───────────┼───────────────────┤
+│  Groq API   │Pollinations│CoinGecko │ generate_memes.py │
+│  DuckDuckGo │DuckDuckGo │          │ memes_data.py     │
+│  CoinGecko  │HF (backup)│          │ trivias_data.py   │
+└─────────────┴───────────┴───────────┴───────────────────┘
+    </pre>
+  </div>
+
+  <h3>Modelo de Ejecución</h3>
+  <p>El bot utiliza el modo <strong>polling</strong> de Telegram con <code>allowed_updates=Update.ALL_TYPES</code> para recibir todos los tipos de eventos, incluidos los de nuevos miembros. Las tareas programadas se ejecutan mediante <strong>APScheduler</strong> integrado en <code>python-telegram-bot[job-queue]</code>.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 03 - FILES -->
+<!-- ################################################################## -->
+<section id="files">
+  <h2><span class="num">03</span> Estructura de Archivos</h2>
+
+  <div class="card">
+    <pre>
+beexo-telegram-bot/
+├── .env                    # Variables de entorno (tokens, chat ID)
+├── bot.py                  # 🧠 Archivo principal (~850 líneas)
+│                           #    Config, handlers, jobs, comandos, main()
+├── ai_chat.py              # 🤖 Módulo de IA (~410 líneas)
+│                           #    Groq + CoinGecko + DuckDuckGo + Personalidad
+├── image_tools.py          # 🎨 Módulo de imágenes (~510 líneas)
+│                           #    Generación + Búsqueda + Detección inteligente
+├── crypto_data.py          # 📅 Efemérides y datos curiosos (~180 líneas)
+├── crypto_news_meme.py     # 📰 Memes cripto en vivo (~207 líneas)
+│                           #    CoinGecko → datos → meme contextual
+├── generate_memes.py       # 🎭 Generador visual de memes (~914 líneas)
+│                           #    Pillow: 20 tipos de escena con ilustraciones
+├── memes_data.py           # 📦 Base de datos: 200 memes (~251 líneas)
+├── trivias_data.py         # 🧩 Base de datos: 55 trivias (~595 líneas)
+├── test_detection.py       # ✅ Tests de detección de imágenes (26 tests)
+└── memes/                  # 📁 Directorio de imágenes de memes generadas
+    </pre>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Archivo</th><th>Líneas</th><th>Responsabilidad Principal</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>bot.py</code></td><td>~851</td><td>Orquestador principal: config, handlers, jobs, comandos, on_message, main()</td></tr>
+      <tr><td><code>ai_chat.py</code></td><td>~408</td><td>Motor de IA con contexto web, precios cripto y personalidad BeeXy</td></tr>
+      <tr><td><code>image_tools.py</code></td><td>~510</td><td>Generación (Pollinations/HF) + búsqueda (DDG) + detección regex inteligente</td></tr>
+      <tr><td><code>generate_memes.py</code></td><td>~914</td><td>20 tipos de escena visual con Pillow (personas, objetos, gráficos)</td></tr>
+      <tr><td><code>crypto_news_meme.py</code></td><td>~207</td><td>CoinGecko → clasifica mercado → genera meme contextual en vivo</td></tr>
+      <tr><td><code>memes_data.py</code></td><td>~251</td><td>200 memes organizados por categoría con estilos visuales</td></tr>
+      <tr><td><code>trivias_data.py</code></td><td>~595</td><td>55 trivias cripto con opciones, respuesta correcta y explicación</td></tr>
+      <tr><td><code>crypto_data.py</code></td><td>~180</td><td>10 efemérides + 20 datos curiosos en formato Markdown</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 04 - CONFIG -->
+<!-- ################################################################## -->
+<section id="config">
+  <h2><span class="num">04</span> Configuración &amp; Variables de Entorno</h2>
+
+  <p>El archivo <code>.env</code> debe estar en el mismo directorio que <code>bot.py</code> y codificado en <strong>UTF-8 sin BOM</strong>.</p>
+
+  <div class="card accent-left">
+    <h4>Variables requeridas</h4>
+    <table>
+      <thead>
+        <tr><th>Variable</th><th>Descripción</th><th>Ejemplo</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>TELEGRAM_BOT_TOKEN</code></td><td>Token del bot de Telegram (obtenido de @BotFather)</td><td><code>8370854664:AAGai...</code></td></tr>
+        <tr><td><code>TARGET_CHAT_ID</code></td><td>ID del grupo de Telegram objetivo</td><td><code>-5174500727</code></td></tr>
+        <tr><td><code>TZ</code></td><td>Zona horaria (formato IANA)</td><td><code>America/Argentina/Buenos_Aires</code></td></tr>
+        <tr><td><code>GROQ_API_KEY</code></td><td>API key de Groq para el LLM</td><td><code>gsk_Z8vk...</code></td></tr>
+        <tr><td><code>HF_TOKEN</code></td><td>Token de Hugging Face (backup para imágenes)</td><td><code>hf_uJMH...</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Configuración interna</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Anti-Scam</h4>
+      <p class="dim"><code>SCAM_ALERT_COOLDOWN_MIN = 5</code><br>Cooldown entre alertas anti-scam para evitar spam.</p>
+    </div>
+    <div class="card">
+      <h4>Emociones</h4>
+      <p class="dim">Cooldown: 15 minutos entre reacciones<br>Probabilidad: 25% cuando se detecta keyword<br>Mínimo 10 caracteres en el mensaje</p>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 05 - COMMANDS -->
+<!-- ################################################################## -->
+<section id="commands">
+  <h2><span class="num">05</span> Comandos del Bot</h2>
+
+  <table>
+    <thead>
+      <tr><th>Comando</th><th>Función</th><th>Descripción</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>/help</code></td>
+        <td><code>help_cmd</code></td>
+        <td>Muestra el menú completo de comandos organizados por categoría (Info, IA, Comunidad, Utilidades, Mencioname, Automático)</td>
+      </tr>
+      <tr>
+        <td><code>/rules</code></td>
+        <td><code>rules_cmd</code></td>
+        <td>Muestra las reglas principales: no compartir seed phrase, nadie escribe por privado primero</td>
+      </tr>
+      <tr>
+        <td><code>/faq</code></td>
+        <td><code>faq_cmd</code></td>
+        <td>FAQ completa de 5 preguntas sobre seguridad en Beexo Wallet: seed phrases, soporte, wallet, admins, seguridad Web3</td>
+      </tr>
+      <tr>
+        <td><code>/ask [pregunta]</code></td>
+        <td><code>ask_cmd</code></td>
+        <td>Consulta directa a la IA. Muestra "🤖 Pensando..." mientras procesa. Soporta cualquier tema.</td>
+      </tr>
+      <tr>
+        <td><code>/imagen [query]</code></td>
+        <td><code>imagen_cmd</code></td>
+        <td>Busca una imagen en la web vía DuckDuckGo con query optimizado por IA. Descarga y envía la mejor imagen encontrada.</td>
+      </tr>
+      <tr>
+        <td><code>/generar [prompt]</code></td>
+        <td><code>generar_cmd</code></td>
+        <td>Genera una imagen con IA usando Pollinations FLUX. El prompt se mejora automáticamente con Groq.</td>
+      </tr>
+      <tr>
+        <td><code>/meme</code></td>
+        <td><code>meme_cmd</code></td>
+        <td>Envía un meme aleatorio de la colección de 200 memes con ilustraciones temáticas.</td>
+      </tr>
+      <tr>
+        <td><code>/trivia</code></td>
+        <td><code>trivia_cmd</code></td>
+        <td>Lanza una trivia cripto aleatoria como poll tipo quiz con explicación.</td>
+      </tr>
+      <tr>
+        <td><code>/poll</code></td>
+        <td><code>poll_cmd</code></td>
+        <td>Lanza una encuesta aleatoria del pool de encuestas predefinidas.</td>
+      </tr>
+      <tr>
+        <td><code>/recordar [tiempo] [texto]</code></td>
+        <td><code>recordar_cmd</code></td>
+        <td>Programa un recordatorio personal. Ej: <code>/recordar 2h comprar ETH</code>. Soporta minutos (m), horas (h) y días (d). Máximo 7 días.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Interacción por Mención</h3>
+  <p>El bot también responde cuando es mencionado por nombre (<code>BeeXy</code>) o por @username en cualquier mensaje del grupo. Detecta automáticamente:</p>
+  <div class="grid-3">
+    <div class="card">
+      <p><code>BeeXy ¿qué es DeFi?</code></p>
+      <p class="dim">→ Respuesta de IA</p>
+    </div>
+    <div class="card">
+      <p><code>BeeXy dibujame un gato</code></p>
+      <p class="dim">→ Genera imagen con IA</p>
+    </div>
+    <div class="card">
+      <p><code>BeeXy buscame una foto de bitcoin</code></p>
+      <p class="dim">→ Busca imagen en la web</p>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 06 - AI -->
+<!-- ################################################################## -->
+<section id="ai">
+  <h2><span class="num">06</span> Módulo de Inteligencia Artificial</h2>
+  <p class="dim">Archivo: <code>ai_chat.py</code> · ~408 líneas</p>
+
+  <h3>Motor LLM</h3>
+  <div class="card accent-left">
+    <p><strong>Modelo:</strong> Llama 3.3 70B Versatile<br>
+    <strong>Proveedor:</strong> Groq (API gratuita, alta velocidad)<br>
+    <strong>Max tokens respuesta:</strong> 700<br>
+    <strong>Temperatura:</strong> 0.7<br>
+    <strong>Historial por usuario:</strong> últimos 8 mensajes</p>
+  </div>
+
+  <h3>Personalidad (System Prompt)</h3>
+  <p>BeeXy habla en español neutro latinoamericano con <strong>toque argentino natural</strong> (usa "vos", "podés", "querés" pero sin abusar de muletillas). Es conciso (4-5 oraciones), puede responder sobre <strong>cualquier tema</strong> (no solo cripto), y nunca da consejos financieros específicos.</p>
+
+  <h3>Enriquecimiento de Contexto</h3>
+  <p>Antes de enviar la pregunta al LLM, el módulo recopila contexto externo automáticamente:</p>
+
+  <div class="card green-left">
+    <h4>1. Datos de Mercado Cripto (CoinGecko)</h4>
+    <p class="dim">Si la pregunta menciona una criptomoneda o es una pregunta de precio, obtiene datos en tiempo real:</p>
+    <ul>
+      <li><strong>26 monedas reconocidas</strong> por alias: BTC, ETH, BNB, SOL, ADA, XRP, DOT, DOGE, SHIB, AVAX, MATIC, LINK, UNI, ATOM, LTC, TRX, USDT, USDC, DAI, NEAR, APT, ARB, OP, SUI, PEPE</li>
+      <li>Datos: precio USD/ARS, cambio 24h, market cap</li>
+      <li>Si no detecta moneda específica pero es pregunta de precio → datos globales (market cap total, dominancia BTC/ETH)</li>
+    </ul>
+  </div>
+
+  <div class="card blue-left">
+    <h4>2. Búsqueda Web (DuckDuckGo)</h4>
+    <p class="dim">Si la pregunta necesita información actualizada, busca automáticamente:</p>
+    <ul>
+      <li><strong>Triggers de búsqueda:</strong> preguntas con "?", "quién es", "qué pasó", "noticias", años (2024-2026), "cómo funciona", "diferencia entre", etc.</li>
+      <li><strong>Exclusiones:</strong> saludos cortos ("hola", "gracias", "jaja")</li>
+      <li>Busca noticias recientes si detecta keywords de actualidad</li>
+      <li>Siempre agrega búsqueda general como complemento</li>
+    </ul>
+  </div>
+
+  <h3>Flujo de una Consulta</h3>
+  <div class="flow">
+    <span class="step">Usuario pregunta</span>
+    <span class="arrow">→</span>
+    <span class="step">Detectar monedas</span>
+    <span class="arrow">→</span>
+    <span class="step">¿Precio? → CoinGecko</span>
+    <span class="arrow">→</span>
+    <span class="step">¿Búsqueda? → DDG</span>
+    <span class="arrow">→</span>
+    <span class="step">Contexto + Historial → Groq</span>
+    <span class="arrow">→</span>
+    <span class="step">Respuesta</span>
+  </div>
+
+  <p class="dim">El contexto se inyecta como nota interna (<code>[CONTEXTO INTERNO - NO MOSTRAR LITERALMENTE]</code>) para que el LLM use la info sin mostrarla literalmente. El historial almacena solo la pregunta limpia (sin contexto).</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 07 - IMAGES -->
+<!-- ################################################################## -->
+<section id="images">
+  <h2><span class="num">07</span> Módulo de Imágenes</h2>
+  <p class="dim">Archivo: <code>image_tools.py</code> · ~510 líneas</p>
+
+  <h3>Dos Modos de Operación</h3>
+  <div class="grid-2">
+    <div class="card green-left">
+      <h4>🔍 Búsqueda de Imágenes</h4>
+      <p class="dim"><strong>Motor:</strong> DuckDuckGo Images</p>
+      <ul>
+        <li>Query optimizado con Groq (traducción a inglés, keywords óptimos)</li>
+        <li>Región: worldwide (<code>wt-wt</code>)</li>
+        <li>Tamaño: <code>Large</code></li>
+        <li>Dual search: query optimizado + original</li>
+        <li>Deduplicación por URL</li>
+        <li>Mínimo 10KB por imagen</li>
+        <li>Máximo 10MB (límite de Telegram)</li>
+      </ul>
+    </div>
+    <div class="card purple-left">
+      <h4>🎨 Generación de Imágenes</h4>
+      <p class="dim"><strong>Motor principal:</strong> Pollinations.ai + FLUX</p>
+      <ul>
+        <li>Prompt mejorado por Groq (inglés descriptivo, tags de calidad)</li>
+        <li>Resolución: 1024×1024</li>
+        <li>100% gratuito, sin API key</li>
+        <li>Retry con seed diferente si falla</li>
+        <li><strong>Backup:</strong> HF Inference API (FLUX.1-schnell)</li>
+        <li><strong>Último recurso:</strong> búsqueda en DDG</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Enhancement de Prompts (Groq)</h3>
+  <div class="card">
+    <p>Para <strong>búsqueda</strong>: traduce a inglés, 2-6 keywords, agrega "HD"/"high quality".</p>
+    <p>Para <strong>generación</strong>: prompt de ~120 palabras en inglés con descripción detallada de sujeto, iluminación, ángulo de cámara, estilo artístico, paleta de colores, texturas, y tags de calidad ("masterpiece, best quality, ultra detailed, 8K").</p>
+  </div>
+
+  <h3>Detección Inteligente de Pedidos de Imagen</h3>
+  <p>El sistema usa <strong>regex compilados</strong> para detectar si un mensaje pide una imagen y determinar si debe <strong>buscar</strong> o <strong>generar</strong>:</p>
+
+  <table>
+    <thead>
+      <tr><th>Acción</th><th>Verbos</th><th>Necesita sustantivo de imagen</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge purple">GENERATE</span></td>
+        <td>genera, dibuja, diseña, ilustra, renderiza</td>
+        <td>NO — estos verbos son exclusivos de creación visual</td>
+      </tr>
+      <tr>
+        <td><span class="badge blue">SEARCH</span></td>
+        <td>busca, mostra, pasa, manda, trae, consegui, encontra, hacé, crea, arma, inventá, imaginá, poné</td>
+        <td>SÍ — requiere "foto", "imagen", "dibujo", etc.</td>
+      </tr>
+      <tr>
+        <td><span class="badge blue">SEARCH</span></td>
+        <td>quiero, necesito, puedo ver</td>
+        <td>SÍ — "quiero una <em>foto</em> de..."</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Personas Reales</h3>
+  <p>Si el prompt menciona una <strong>persona real</strong> (de una lista de ~50+ nombres: Messi, Elon Musk, Trump, etc.), la generación se redirige automáticamente a búsqueda, ya que las IAs no pueden replicar personas reales con precisión.</p>
+
+  <h3>Cadena de Fallback (Generación)</h3>
+  <div class="flow">
+    <span class="step">Persona real? → Buscar</span>
+    <span class="arrow">|</span>
+    <span class="step">① Pollinations FLUX</span>
+    <span class="arrow">→ falla →</span>
+    <span class="step">② HF Inference</span>
+    <span class="arrow">→ falla →</span>
+    <span class="step">③ DDG Image Search</span>
+  </div>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 08 - ANTISCAM -->
+<!-- ################################################################## -->
+<section id="antiscam">
+  <h2><span class="num">08</span> Sistema Anti-Scam</h2>
+
+  <div class="card red-left">
+    <h4>⚠️ Detección Automática de Scam</h4>
+    <p>Cuando un mensaje contiene keywords de estafas comunes en cripto, el bot responde automáticamente con una alerta de seguridad.</p>
+  </div>
+
+  <h3>Keywords Monitoreadas (~70+)</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h4>Seed / Claves</h4>
+      <p class="dim">seed, seed phrase, 12 palabras, 24 palabras, frase semilla, recovery phrase, private key, clave privada, mnemonic, passphrase</p>
+    </div>
+    <div class="card">
+      <h4>Contacto Sospechoso</h4>
+      <p class="dim">me escribieron, me contactaron, dm, privado, por privado, mensaje privado, inbox</p>
+    </div>
+    <div class="card">
+      <h4>Scams Clásicos</h4>
+      <p class="dim">validar wallet, sincronizar, connect wallet, migrar, actualizar wallet, upgrade</p>
+    </div>
+    <div class="card">
+      <h4>Airdrops Falsos</h4>
+      <p class="dim">airdrop, claim, regalo, giveaway, sorteo, token gratis, free, whitelist</p>
+    </div>
+    <div class="card">
+      <h4>Inversión Fraudulenta</h4>
+      <p class="dim">inversión garantizada, rendimiento garantizado, duplicar, enviar para recibir, 100% profit</p>
+    </div>
+    <div class="card">
+      <h4>Phishing</h4>
+      <p class="dim">formulario, kyc, verificar identidad, ingresá tu, completar datos, me hackearon, fondos bloqueados</p>
+    </div>
+  </div>
+
+  <h3>Mensaje de Alerta</h3>
+  <div class="card">
+    <pre>⚠️ ALERTA ANTI-SCAM
+
+• Nadie te pedirá tus 12 palabras / seed phrase
+• Ningún admin te escribe por privado primero
+• Pedí ayuda solo en el grupo</pre>
+  </div>
+  <p class="dim">Cooldown: 5 minutos entre alertas para evitar spam repetitivo.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 09 - SCHEDULED -->
+<!-- ################################################################## -->
+<section id="scheduled">
+  <h2><span class="num">09</span> Tareas Programadas (Jobs)</h2>
+
+  <p>El bot ejecuta múltiples tareas automáticas usando el <strong>Job Queue</strong> de python-telegram-bot (APScheduler). Zona horaria: <code>America/Argentina/Buenos_Aires</code>.</p>
+
+  <table>
+    <thead>
+      <tr><th>Job</th><th>Horario</th><th>Frecuencia</th><th>Descripción</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>☀️ Buenos días</td><td>08:00</td><td>Diario</td><td>Mensaje motivacional random (5 variantes)</td></tr>
+      <tr><td>🌙 Buenas noches</td><td>22:00</td><td>Diario</td><td>Mensaje nocturno random (5 variantes)</td></tr>
+      <tr><td>📊 Resumen cripto</td><td>10:00</td><td>Diario</td><td>Precios de 8 criptos con cambio 24h</td></tr>
+      <tr><td>📅 Efemérides</td><td>09:30</td><td>Diario (si hay)</td><td>Chequea 10 fechas históricas cripto</td></tr>
+      <tr><td>🎮 Engagement</td><td>19:30</td><td>Lun/Mié/Vie/Dom</td><td>Trivia (60%) o encuesta (40%) random</td></tr>
+      <tr><td>🎭 Memes</td><td>Random 9-22h</td><td>2/día</td><td>Planificados a las 00:05 con horarios aleatorios</td></tr>
+      <tr><td>🧠 Dato curioso</td><td>15:00</td><td>Miércoles</td><td>1 de 20 datos curiosos sobre cripto</td></tr>
+      <tr><td>📰 Noticias</td><td>11:00</td><td>Lunes</td><td>Top 5 noticias cripto de la semana</td></tr>
+      <tr><td>📰 Meme cripto vivo</td><td>Aleatorio</td><td>~cada 18-28h</td><td>Meme basado en datos de mercado en tiempo real</td></tr>
+      <tr><td>🧩 Trivia auto</td><td>Aleatorio</td><td>~cada 36-60h</td><td>Trivia automática al grupo</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Sistema de Memes Diarios</h3>
+  <p>A las <strong>00:05</strong> cada día, el job <code>schedule_daily_memes</code> elige 2 horarios aleatorios distintos entre las 9:00 y las 22:00, y programa un <code>run_once</code> para cada uno. Esto crea variabilidad natural en los horarios de envío.</p>
+
+  <h3>Jobs con Cadena (Self-Scheduling)</h3>
+  <p>El <strong>meme cripto en vivo</strong> y la <strong>trivia automática</strong> usan un patrón de auto-programación: al terminar, programan su próxima ejecución con un delay aleatorio. Esto evita que se ejecuten siempre a la misma hora.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 10 - MEMES -->
+<!-- ################################################################## -->
+<section id="memes">
+  <h2><span class="num">10</span> Sistema de Memes</h2>
+
+  <h3>200 Memes Estáticos con Ilustraciones</h3>
+  <p class="dim">Archivos: <code>memes_data.py</code> (datos) + <code>generate_memes.py</code> (generador visual)</p>
+
+  <p>Cada meme tiene texto superior e inferior con un estilo visual único generado por Pillow. El generador incluye <strong>20 tipos de escena</strong> que se seleccionan automáticamente según el contenido del texto:</p>
+
+  <div class="grid-3">
+    <div class="card"><p>👤 Persona preocupada</p></div>
+    <div class="card"><p>🎉 Persona celebrando</p></div>
+    <div class="card"><p>🏃 Persona corriendo</p></div>
+    <div class="card"><p>💻 Trading desk</p></div>
+    <div class="card"><p>📱 Persona con teléfono</p></div>
+    <div class="card"><p>📊 Monitor con gráfico</p></div>
+    <div class="card"><p>🔒 Candado/seguridad</p></div>
+    <div class="card"><p>👨‍👩‍👦 Familia en mesa</p></div>
+    <div class="card"><p>🛏️ Persona en cama</p></div>
+    <div class="card"><p>💰 Billetera/wallet</p></div>
+  </div>
+
+  <h4>Categorías de Memes</h4>
+  <table>
+    <thead><tr><th>Categoría</th><th>Cantidad</th><th>Ejemplo</th></tr></thead>
+    <tbody>
+      <tr><td>Dip Culture</td><td>15</td><td>"Compraste el dip con Beexo... Plot twist: era solo el aperitivo del dip"</td></tr>
+      <tr><td>Seed Phrase / Seguridad</td><td>20</td><td>"Alguien te pide tu seed phrase... Dejame compartirte UN BLOQUEO"</td></tr>
+      <tr><td>HODL / Trading</td><td>20</td><td>"Vendí BTC a $30k... BTC al día siguiente: $60k"</td></tr>
+      <tr><td>Portfolio / Ganancias</td><td>15</td><td>"Mi portfolio en verde por primera vez... *llora*"</td></tr>
+      <tr><td>FOMO / FUD</td><td>15</td><td>"FOMO a las 3am comprando un shitcoin... 7am: perdí todo"</td></tr>
+      <tr><td>+10 categorías más</td><td>115</td><td>Regulaciones, Familia, DeFi, NFTs, Stablecoins, Mining, etc.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Memes Cripto en Vivo</h3>
+  <p class="dim">Archivo: <code>crypto_news_meme.py</code></p>
+  <p>Cada ~18-28 horas, el bot consulta <strong>CoinGecko</strong> para obtener datos de mercado reales y genera un meme contextual:</p>
+
+  <div class="flow">
+    <span class="step">CoinGecko API</span>
+    <span class="arrow">→</span>
+    <span class="step">Clasificar: UP / DOWN / TRENDING / SIDEWAYS</span>
+    <span class="arrow">→</span>
+    <span class="step">Elegir template + colores</span>
+    <span class="arrow">→</span>
+    <span class="step">Generar meme con Pillow</span>
+    <span class="arrow">→</span>
+    <span class="step">Enviar con caption (precio + cambio %)</span>
+  </div>
+
+  <p>Templates según escenario:</p>
+  <ul>
+    <li><span class="badge green">SUBIDA</span> 8 templates (ej: "{coin} subio {pct}% hoy... Beexer promedio: les dije que iba a subir")</li>
+    <li><span class="badge red">BAJADA</span> 8 templates (ej: "{coin} dump de {pct}%... Mi portfolio: existir es dolor")</li>
+    <li><span class="badge purple">TRENDING</span> 5 templates (ej: "Todos hablan de {coin}... Yo que invertí hace un mes: de nada")</li>
+    <li><span class="badge cyan">LATERAL</span> 3 templates (ej: "{coin} se mueve 0.1% en todo el dia... Traders: es el día más aburrido")</li>
+  </ul>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 11 - TRIVIAS -->
+<!-- ################################################################## -->
+<section id="trivias">
+  <h2><span class="num">11</span> Trivias &amp; Encuestas</h2>
+  <p class="dim">Archivo: <code>trivias_data.py</code> · 55 trivias</p>
+
+  <p>Cada trivia es un <strong>poll tipo quiz</strong> de Telegram con 4 opciones, respuesta correcta marcada, y una explicación educativa que se muestra al responder.</p>
+
+  <h3>Categorías de Trivias</h3>
+  <div class="grid-3">
+    <div class="card"><p>📜 Historia de Bitcoin</p></div>
+    <div class="card"><p>⟠ Ethereum &amp; Smart Contracts</p></div>
+    <div class="card"><p>🔐 Seguridad &amp; Wallets</p></div>
+    <div class="card"><p>💰 DeFi &amp; Finanzas</p></div>
+    <div class="card"><p>🌐 Blockchain General</p></div>
+    <div class="card"><p>🎭 Cultura Cripto</p></div>
+  </div>
+
+  <div class="card accent-left">
+    <h4>Ejemplo de Trivia</h4>
+    <p><strong>Pregunta:</strong> ¿Cuántos BTC se pagaron por 2 pizzas en 2010?</p>
+    <p><strong>Opciones:</strong> 100 BTC | 1.000 BTC | <span class="badge green">10.000 BTC ✓</span> | 50.000 BTC</p>
+    <p class="dim"><strong>Explicación:</strong> Laszlo Hanyecz pagó 10.000 BTC por dos pizzas el 22 de mayo de 2010.</p>
+  </div>
+
+  <h3>Envío de Trivias</h3>
+  <ul>
+    <li><strong>Manual:</strong> <code>/trivia</code> — el usuario pide una trivia</li>
+    <li><strong>Automática:</strong> cada ~36-60 horas (self-scheduling)</li>
+    <li><strong>Engagement:</strong> Lun/Mié/Vie/Dom a las 19:30 — 60% probabilidad trivia, 40% encuesta</li>
+  </ul>
+
+  <h3>Encuestas Predefinidas</h3>
+  <table>
+    <thead><tr><th>Pregunta</th><th>Opciones</th></tr></thead>
+    <tbody>
+      <tr><td>📊 ¿Cómo ves el mercado hoy?</td><td>Bullish · Neutral · Bearish · Solo observo</td></tr>
+      <tr><td>📊 ¿Qué querés más en la comunidad?</td><td>Trivias · Noticias · Tutoriales · AMAs</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 12 - WELCOME -->
+<!-- ################################################################## -->
+<section id="welcome">
+  <h2><span class="num">12</span> Bienvenida a Nuevos Miembros</h2>
+
+  <p>Cuando un nuevo usuario se une al grupo, el bot envía automáticamente un mensaje de bienvenida personalizado con el nombre del usuario. Se ignoran los bots.</p>
+
+  <h3>3 Templates de Bienvenida</h3>
+  <div class="card accent-left">
+    <pre>🐝 ¡Bienvenid@ {name}!
+
+Soy BeeXy, el bot de la comunidad Beexo.
+
+📌 Regla #1: nunca compartas tu seed phrase
+🤖 Consultame lo que necesites: BeeXy ¿qué es DeFi?
+🎨 También genero imágenes: BeeXy dibujame un gato astronauta</pre>
+  </div>
+  <div class="card green-left">
+    <pre>👋 ¡Hola {name}! Bienvenid@ a la comunidad Beexo 🐝
+
+Acá aprendemos sobre cripto y nos cuidamos entre todos.
+Escribí /help para ver todo lo que puedo hacer.</pre>
+  </div>
+  <div class="card blue-left">
+    <pre>🎉 ¡{name} se sumó a Beexo!
+
+Bienvenid@ a la mejor comunidad cripto de habla hispana.
+Nunca respondas DMs de "soporte". Toda ayuda acá en el grupo. 🛡</pre>
+  </div>
+
+  <p class="dim"><strong>Handler:</strong> <code>MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, welcome_new_member)</code></p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 13 - EMOTIONS -->
+<!-- ################################################################## -->
+<section id="emotions">
+  <h2><span class="num">13</span> Reacciones Emocionales + GIFs</h2>
+
+  <p>El bot detecta el <em>sentimiento</em> del chat analizando keywords de mercado en mensajes <strong>NO dirigidos al bot</strong>. Si se activa, responde con texto + intenta enviar un GIF relacionado.</p>
+
+  <h3>5 Categorías Emocionales</h3>
+  <table>
+    <thead>
+      <tr><th>Emoción</th><th>Keywords</th><th>Ejemplo de Respuesta</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge green">🚀 PUMP</span></td>
+        <td>pump, pumpeando, bullish, bull run, todo verde, subiendo fuerte, para arriba</td>
+        <td>"🚀🟢 ¡PUMP MODE ACTIVADO! A la luna vamos 🌕"</td>
+      </tr>
+      <tr>
+        <td><span class="badge red">📉 DUMP</span></td>
+        <td>dump, crash, se desplomó, todo rojo, bearish, liquidado, dumpeando</td>
+        <td>"📉🔴 F en el chat... Resistamos 💀"</td>
+      </tr>
+      <tr>
+        <td><span class="badge blue">💎 HODL</span></td>
+        <td>hodl, diamond hands, manos de diamante, no vendo, aguantamos</td>
+        <td>"💎🙌 ¡HODL GANG! Las manos de diamante nunca fallan"</td>
+      </tr>
+      <tr>
+        <td><span class="badge gold">⚠️ FOMO</span></td>
+        <td>fomo, all in, compro ya, yolo, me lo pierdo</td>
+        <td>"⚠️ ¡Cuidado con el FOMO! DYOR siempre 🧠"</td>
+      </tr>
+      <tr>
+        <td><span class="badge purple">🌕 MOON</span></td>
+        <td>to the moon, ath, máximo histórico, all time high, mooning</td>
+        <td>"🌕 ¡TO THE MOOOON! 🚀🚀🚀"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Condiciones de Activación</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Filtros Anti-Spam</h4>
+      <ul>
+        <li>Cooldown: <strong>15 minutos</strong> entre reacciones</li>
+        <li>Mínimo <strong>10 caracteres</strong> en el mensaje</li>
+        <li>Solo mensajes <strong>NO dirigidos</strong> al bot</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Probabilidad</h4>
+      <ul>
+        <li><strong>25%</strong> de probabilidad al detectar keyword</li>
+        <li>GIF buscado en DuckDuckGo Images (archivos .gif)</li>
+        <li>Si el GIF falla, solo se envía el texto (best-effort)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 14 - REMINDERS -->
+<!-- ################################################################## -->
+<section id="reminders">
+  <h2><span class="num">14</span> Recordatorios Personales</h2>
+
+  <div class="card accent-left">
+    <h4>Comando: <code>/recordar [tiempo] [texto]</code></h4>
+    <p>Programa un recordatorio personal que el bot enviará al chat cuando se cumpla el tiempo.</p>
+  </div>
+
+  <h3>Formato de Tiempo</h3>
+  <table>
+    <thead><tr><th>Unidad</th><th>Símbolo</th><th>Ejemplo</th><th>Límite</th></tr></thead>
+    <tbody>
+      <tr><td>Minutos</td><td><code>m</code></td><td><code>/recordar 30m revisar portfolio</code></td><td>Mín: 1 min</td></tr>
+      <tr><td>Horas</td><td><code>h</code></td><td><code>/recordar 2h comprar ETH</code></td><td>—</td></tr>
+      <tr><td>Días</td><td><code>d</code></td><td><code>/recordar 1d chequear staking</code></td><td>Máx: 7 días</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Funcionamiento</h3>
+  <div class="flow">
+    <span class="step">Parseo regex: <code>^(\d+)(m|h|d)$</code></span>
+    <span class="arrow">→</span>
+    <span class="step">Validar rango (1min – 7días)</span>
+    <span class="arrow">→</span>
+    <span class="step"><code>job_queue.run_once()</code></span>
+    <span class="arrow">→</span>
+    <span class="step">⏰ Dispara <code>reminder_fire</code></span>
+  </div>
+
+  <p class="dim">Cada recordatorio se programa como un job único con nombre <code>reminder_{user_id}_{timestamp}</code> para evitar conflictos.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 15 - CRYPTO SUMMARY -->
+<!-- ################################################################## -->
+<section id="crypto-summary">
+  <h2><span class="num">15</span> Resumen Diario de Cripto</h2>
+
+  <p>Todos los días a las <strong>10:00 AM</strong>, el bot envía un resumen del mercado cripto con precios actualizados vía <strong>CoinGecko API</strong>.</p>
+
+  <h3>8 Criptomonedas Incluidas</h3>
+  <div class="card">
+    <p>
+      ₿ <strong>BTC</strong> · ⟠ <strong>ETH</strong> · 🔶 <strong>BNB</strong> · ◎ <strong>SOL</strong> · 💧 <strong>XRP</strong> · 🔵 <strong>ADA</strong> · 🐕 <strong>DOGE</strong> · ⬡ <strong>DOT</strong>
+    </p>
+  </div>
+
+  <h3>Formato del Mensaje</h3>
+  <div class="card accent-left">
+    <pre>📊 Resumen Diario del Mercado Cripto
+
+🟢 ₿ BTC: $103,450.00 (+2.3%)
+🔴 ⟠ ETH: $3,120.50 (-1.1%)
+🟢 🔶 BNB: $645.80 (+0.5%)
+🟢 ◎ SOL: $198.30 (+4.2%)
+🔴 💧 XRP: $0.6840 (-0.8%)
+🟢 🔵 ADA: $0.4520 (+1.7%)
+🟢 🐕 DOGE: $0.1230 (+3.1%)
+🔴 ⬡ DOT: $7.85 (-0.3%)
+
+Actualizado: 10/02/2026 10:00</pre>
+  </div>
+
+  <p class="dim">Cada precio muestra 🟢 (positivo) o 🔴 (negativo), con el cambio en porcentaje de las últimas 24 horas. Precios &lt; $1 muestran 4 decimales.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 16 - EPHEMERIDES -->
+<!-- ################################################################## -->
+<section id="ephemerides">
+  <h2><span class="num">16</span> Efemérides Cripto</h2>
+  <p class="dim">Archivo: <code>crypto_data.py</code> · Chequeo diario a las 09:30</p>
+
+  <p>Cada día a las 09:30, el bot verifica si la fecha actual coincide con alguna de las <strong>10 efemérides históricas</strong> de las criptomonedas. Si hay coincidencia, envía el mensaje al grupo.</p>
+
+  <table>
+    <thead><tr><th>Fecha</th><th>Evento</th></tr></thead>
+    <tbody>
+      <tr><td>3 de enero</td><td>⛏️ Bloque Génesis de Bitcoin (2009)</td></tr>
+      <tr><td>10 de enero</td><td>📈 Aprobación de ETFs spot de Bitcoin (2024)</td></tr>
+      <tr><td>14 de abril</td><td>🏛️ Coinbase sale a cotizar en NASDAQ (2021)</td></tr>
+      <tr><td>22 de mayo</td><td>🍕 Bitcoin Pizza Day — 10,000 BTC por 2 pizzas (2010)</td></tr>
+      <tr><td>30 de julio</td><td>💎 Lanzamiento de la mainnet de Ethereum (2015)</td></tr>
+      <tr><td>1 de agosto</td><td>🔀 Hard fork de Bitcoin Cash (2017)</td></tr>
+      <tr><td>15 de septiembre</td><td>🔄 Ethereum completa The Merge — PoW a PoS (2022)</td></tr>
+      <tr><td>31 de octubre</td><td>📄 Publicación del whitepaper de Bitcoin (2008)</td></tr>
+      <tr><td>10 de noviembre</td><td>🏔️ BTC alcanza ATH de ~$69,000 (2021)</td></tr>
+      <tr><td>28 de noviembre</td><td>⚡ Primer halving de Bitcoin (2012)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 17 - FUN FACTS -->
+<!-- ################################################################## -->
+<section id="fun-facts">
+  <h2><span class="num">17</span> Datos Curiosos Semanales</h2>
+  <p class="dim">Miércoles a las 15:00 · 20 datos curiosos</p>
+
+  <p>Cada miércoles a las 15:00, el bot envía un dato curioso aleatorio de su colección de 20 hechos sobre criptomonedas. Cada dato comienza con "🧠 <em>¿Sabías que...</em>".</p>
+
+  <h3>Temas Cubiertos</h3>
+  <div class="grid-2">
+    <div class="card">
+      <ul>
+        <li>Los 1.1M BTC de Satoshi Nakamoto</li>
+        <li>21% de BTC perdido para siempre</li>
+        <li>Primera transacción: Satoshi → Hal Finney</li>
+        <li>ICO de Ethereum a $0.31</li>
+        <li>Origen del término HODL</li>
+        <li>Dogecoin creado como broma en 3 horas</li>
+        <li>Vietnam: país con más adopción cripto</li>
+        <li>22,000+ criptomonedas existentes</li>
+        <li>El Salvador: primer país con BTC legal</li>
+        <li>Halvings: 2012, 2016, 2020, 2024</li>
+      </ul>
+    </div>
+    <div class="card">
+      <ul>
+        <li>BTC: 7 TPS vs Visa: 65,000 TPS</li>
+        <li>Vitalik Buterin: 19 años → whitepaper</li>
+        <li>"Blockchain" no aparece en el whitepaper de BTC</li>
+        <li>Consumo energético del minado de BTC</li>
+        <li>Mt. Gox: 850,000 BTC hackeados</li>
+        <li>DeFi: $50B+ bloqueados en protocolos</li>
+        <li>Bitcoin nunca fue hackeado (la blockchain)</li>
+        <li>1 satoshi = 0.00000001 BTC</li>
+        <li>Stablecoins mueven más que PayPal + Venmo</li>
+        <li>BAYC NFTs: de $190 a $400,000</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 18 - NEWS -->
+<!-- ################################################################## -->
+<section id="news">
+  <h2><span class="num">18</span> Noticias Semanales</h2>
+  <p class="dim">Lunes a las 11:00 AM</p>
+
+  <p>Cada lunes a las 11:00, el bot busca las noticias cripto más recientes en <strong>DuckDuckGo News</strong> (región Argentina) y envía un resumen con las top 5:</p>
+
+  <div class="card accent-left">
+    <pre>📰 Las 5 noticias cripto de la semana
+
+1. Bitcoin supera los $100,000 por primera vez — CoinDesk
+2. Ethereum 2.0 registra nuevo récord de staking — CoinTelegraph
+3. Argentina analiza regulación cripto — Infobae
+4. Solana lanza actualización de red — Decrypt
+5. NFTs muestran señales de recuperación — The Block
+
+Resumen semanal — 10/02/2026</pre>
+  </div>
+
+  <p class="dim">Cada noticia incluye título como link clickeable y la fuente. Se buscan 8 resultados pero solo se muestran los 5 más relevantes. Se usa <code>disable_web_page_preview=True</code> para evitar previews pesadas.</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 19 - MESSAGE FLOW -->
+<!-- ################################################################## -->
+<section id="message-flow">
+  <h2><span class="num">19</span> Flujo de Mensajes (on_message)</h2>
+
+  <p>Todo mensaje de texto que no sea un comando pasa por el handler <code>on_message</code>, que ejecuta una serie de verificaciones en orden:</p>
+
+  <div class="card">
+    <div class="timeline">
+      <div class="event">
+        <div class="time">Paso 1 — Anti-Scam</div>
+        <div class="desc">¿Contiene keywords de scam? → Enviar alerta (con cooldown de 5 min)</div>
+      </div>
+      <div class="event">
+        <div class="time">Paso 2 — Detectar mención</div>
+        <div class="desc">¿Menciona @username o "beexy"? → Si sí, continuar al paso 3. Si no, ir al paso 6.</div>
+      </div>
+      <div class="event">
+        <div class="time">Paso 3 — Mensaje muy corto</div>
+        <div class="desc">¿Menos de 3 caracteres después de quitar la mención? → Responder con intro de BeeXy</div>
+      </div>
+      <div class="event">
+        <div class="time">Paso 4 — Detección de imagen</div>
+        <div class="desc"><code>detect_image_request()</code> → ¿Pide generar o buscar imagen? → <code>_handle_image_request()</code> + return</div>
+      </div>
+      <div class="event">
+        <div class="time">Paso 5 — Respuesta IA</div>
+        <div class="desc">Mostrar "🐝 Pensando..." → <code>ask_ai()</code> con contexto enriquecido → Editar mensaje con respuesta + return</div>
+      </div>
+      <div class="event">
+        <div class="time">Paso 6 — Reacciones emocionales</div>
+        <div class="desc">Solo si NO fue mencionado → <code>_maybe_react_emotion()</code> (25% prob, 15min cooldown)</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="dim"><strong>Nota:</strong> El paso 1 (anti-scam) siempre se ejecuta, incluso si el mensaje también activa otros pasos. Los pasos 3, 4 y 5 son mutuamente excluyentes (el primero que matchea hace return).</p>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 20 - APIS -->
+<!-- ################################################################## -->
+<section id="apis">
+  <h2><span class="num">20</span> APIs Externas Utilizadas</h2>
+
+  <table>
+    <thead>
+      <tr><th>API</th><th>Costo</th><th>Uso en el Bot</th><th>Límites</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Groq</strong> (Llama 3.3 70B)</td>
+        <td><span class="badge green">Gratis</span></td>
+        <td>Chat IA, enhancement de prompts de imagen, optimización de queries de búsqueda</td>
+        <td>Rate limit por minuto (tier gratuito)</td>
+      </tr>
+      <tr>
+        <td><strong>Pollinations.ai</strong> (FLUX)</td>
+        <td><span class="badge green">Gratis</span></td>
+        <td>Generación de imágenes 1024×1024 (proveedor principal)</td>
+        <td>Sin API key, sin límite conocido</td>
+      </tr>
+      <tr>
+        <td><strong>Hugging Face Inference</strong></td>
+        <td><span class="badge green">Gratis</span></td>
+        <td>Generación de imágenes FLUX.1-schnell (backup)</td>
+        <td>Requiere token con permisos</td>
+      </tr>
+      <tr>
+        <td><strong>CoinGecko</strong></td>
+        <td><span class="badge green">Gratis</span></td>
+        <td>Precios cripto en tiempo real (USD/ARS), 24h change, market cap, trending</td>
+        <td>~30 req/min sin key</td>
+      </tr>
+      <tr>
+        <td><strong>DuckDuckGo Search</strong></td>
+        <td><span class="badge green">Gratis</span></td>
+        <td>Búsqueda web, búsqueda de noticias, búsqueda de imágenes</td>
+        <td>Sin API key, sin límite documentado</td>
+      </tr>
+      <tr>
+        <td><strong>Telegram Bot API</strong></td>
+        <td><span class="badge green">Gratis</span></td>
+        <td>Envío/recepción de mensajes, polls, fotos, animaciones GIF</td>
+        <td>~30 msgs/seg por grupo</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card green-left">
+    <h4>💰 Costo Total de Operación: $0/mes</h4>
+    <p class="dim">Todas las APIs utilizadas son gratuitas. El único costo potencial es el servidor/VPS donde se ejecuta el bot.</p>
+  </div>
+</section>
+
+<hr>
+
+<!-- ################################################################## -->
+<!-- 21 - SCHEDULE SUMMARY -->
+<!-- ################################################################## -->
+<section id="schedule-summary">
+  <h2><span class="num">21</span> Cronograma Completo de Actividad</h2>
+
+  <p>Vista completa de toda la actividad programada del bot durante una semana típica:</p>
+
+  <div class="card">
+    <div class="timeline">
+      <div class="event">
+        <div class="time">00:05</div>
+        <div class="desc">🎭 Planificar 2 horarios random para memes del día</div>
+      </div>
+      <div class="event">
+        <div class="time">08:00</div>
+        <div class="desc">☀️ Mensaje de buenos días (diario)</div>
+      </div>
+      <div class="event">
+        <div class="time">09:00 – 22:00</div>
+        <div class="desc">🎭 Meme #1 y #2 a horas aleatorias (diario)</div>
+      </div>
+      <div class="event">
+        <div class="time">09:30</div>
+        <div class="desc">📅 Chequeo de efeméride del día (diario, envía si hay)</div>
+      </div>
+      <div class="event">
+        <div class="time">10:00</div>
+        <div class="desc">📊 Resumen diario del mercado cripto (diario)</div>
+      </div>
+      <div class="event">
+        <div class="time">11:00</div>
+        <div class="desc">📰 Top 5 noticias cripto semanales (solo <strong>lunes</strong>)</div>
+      </div>
+      <div class="event">
+        <div class="time">15:00</div>
+        <div class="desc">🧠 Dato curioso semanal (solo <strong>miércoles</strong>)</div>
+      </div>
+      <div class="event">
+        <div class="time">19:30</div>
+        <div class="desc">🎮 Trivia o encuesta de engagement (<strong>Lun/Mié/Vie/Dom</strong>)</div>
+      </div>
+      <div class="event">
+        <div class="time">22:00</div>
+        <div class="desc">🌙 Mensaje de buenas noches (diario)</div>
+      </div>
+      <div class="event">
+        <div class="time">Variable</div>
+        <div class="desc">📰 Meme cripto en vivo (cada ~18-28 horas)</div>
+      </div>
+      <div class="event">
+        <div class="time">Variable</div>
+        <div class="desc">🧩 Trivia automática (cada ~36-60 horas)</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Resumen Semanal de Mensajes</h3>
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="num">~14</div>
+      <div class="label">Buenos días / noches por semana</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">~14</div>
+      <div class="label">Memes estáticos por semana</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">~7</div>
+      <div class="label">Resúmenes cripto por semana</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">~6+</div>
+      <div class="label">Trivias + encuestas + engagement</div>
+    </div>
+  </div>
+
+  <p style="text-align:center; margin-top:60px; color: var(--text2);">
+    — Fin del documento —<br>
+    <span style="font-size: 40px; filter: drop-shadow(0 0 15px rgba(247,183,49,0.4));">🐝</span><br>
+    <strong style="color: var(--accent);">BeeXy Bot</strong> · Beexo Wallet Community · 2026
+  </p>
+</section>
+
+</div><!-- /container -->
+</body>
+</html>
