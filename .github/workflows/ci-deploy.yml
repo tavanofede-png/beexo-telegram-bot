@@ -57,3 +57,11 @@ jobs:
           # Example CLI usage; adapt to your Railway project and service
           railway whoami || echo "Logged into Railway"
           echo "(Add your deployment commands here)"
+
+      - name: Run SQLite→Postgres migration
+        if: ${{ secrets.DATABASE_URL != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "Running SQLite -> Postgres migration using DATABASE_URL"
+          python -u beexo-telegram-bot/tools/migrate_sqlite_to_postgres.py --database-url "${{ secrets.DATABASE_URL }}"
