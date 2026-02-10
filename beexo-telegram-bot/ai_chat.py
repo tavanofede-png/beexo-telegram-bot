@@ -323,141 +323,69 @@ def _trim_history(user_id: int):
 
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "beexy_history.db")
-DATABASE_URL = os.getenv("DATABASE_URL")  # e.g. postgres://user:pass@host:5432/dbname
 
 
 def _get_conn():
-    """Return a DB connection. Uses Postgres if DATABASE_URL set, otherwise SQLite."""
-    if DATABASE_URL:
-        import psycopg2
-        # Accept DATABASE_URL directly; let psycopg2 parse it
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
-    else:
-        # Allow multithreaded access from bot threads
-        return sqlite3.connect(DB_PATH, check_same_thread=False)
+    """Return a SQLite connection allowing multi-thread access from bot threads."""
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 
 def _init_db():
-    """Initialize DB schema. If Postgres is used, create equivalent tables.
-
-    For SQLite we keep the original schemas (FTS5 for kb_docs when available).
-    For Postgres we create plain tables and use ILIKE searches in `_query_kb`.
-    """
+    """Initialize SQLite schema used by the bot (interactions, kb_docs, reports, reminders)."""
     conn = None
     try:
         conn = _get_conn()
         cur = conn.cursor()
-        if DATABASE_URL:
-            # Postgres schemas
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS interactions (
-                    id SERIAL PRIMARY KEY,
-                    user_id BIGINT,
-                    user_name TEXT,
-                    question TEXT,
-                    answer TEXT,
-                    created_at TIMESTAMP
-                )
-                """
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS interactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                user_name TEXT,
+                question TEXT,
+                answer TEXT,
+                created_at TEXT
             )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS kb_docs (
-                    id SERIAL PRIMARY KEY,
-                    title TEXT,
-                    content TEXT,
-                    source TEXT
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reports (
-                    id SERIAL PRIMARY KEY,
-                    reporter_id BIGINT,
-                    reporter_name TEXT,
-                    reported_id BIGINT,
-                    reported_name TEXT,
-                    chat_id BIGINT,
-                    reason TEXT,
-                    created_at TIMESTAMP,
-                    handled INTEGER DEFAULT 0
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reminders (
-                    id SERIAL PRIMARY KEY,
-                    user_id BIGINT,
-                    user_name TEXT,
-                    chat_id BIGINT,
-                    text TEXT,
-                    scheduled_at BIGINT,
-                    created_at TIMESTAMP,
-                    fired INTEGER DEFAULT 0
-                )
-                """
-            )
-        else:
-            # SQLite schemas (retain FTS5 for kb_docs when available)
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS interactions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    user_name TEXT,
-                    question TEXT,
-                    answer TEXT,
-                    created_at TEXT
-                )
-                """
-            )
-            # Try to create FTS5 virtual table; fallback to normal table
-            try:
-                cur.execute(
-                    "CREATE VIRTUAL TABLE IF NOT EXISTS kb_docs USING fts5(title, content, source);"
-                )
-            except Exception:
-                cur.execute(
-                    "CREATE TABLE IF NOT EXISTS kb_docs (title TEXT, content TEXT, source TEXT);"
-                )
+            """
+        )
+        # Try to create FTS5 virtual table; fallback to normal table
+        try:
+            cur.execute("CREATE VIRTUAL TABLE IF NOT EXISTS kb_docs USING fts5(title, content, source);")
+        except Exception:
+            cur.execute("CREATE TABLE IF NOT EXISTS kb_docs (title TEXT, content TEXT, source TEXT);")
 
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reports (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    reporter_id INTEGER,
-                    reporter_name TEXT,
-                    reported_id INTEGER,
-                    reported_name TEXT,
-                    chat_id INTEGER,
-                    reason TEXT,
-                    created_at TEXT,
-                    handled INTEGER DEFAULT 0
-                )
-                """
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                reporter_id INTEGER,
+                reporter_name TEXT,
+                reported_id INTEGER,
+                reported_name TEXT,
+                chat_id INTEGER,
+                reason TEXT,
+                created_at TEXT,
+                handled INTEGER DEFAULT 0
             )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reminders (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    user_name TEXT,
-                    chat_id INTEGER,
-                    text TEXT,
-                    scheduled_at INTEGER,
-                    created_at TEXT,
-                    fired INTEGER DEFAULT 0
-                )
-                """
+            """
+        )
+
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                user_name TEXT,
+                chat_id INTEGER,
+                text TEXT,
+                scheduled_at INTEGER,
+                created_at TEXT,
+                fired INTEGER DEFAULT 0
             )
-        # Commit
+            """
+        )
         conn.commit()
     except Exception:
-        # If initialization fails, don't crash the whole bot; log would be helpful.
         pass
     finally:
         try:
@@ -471,16 +399,10 @@ def _log_interaction(user_id: int, user_name: str | None, question: str, answer:
     try:
         conn = _get_conn()
         cur = conn.cursor()
-        if DATABASE_URL:
-            cur.execute(
-                "INSERT INTO interactions (user_id, user_name, question, answer, created_at) VALUES (%s, %s, %s, %s, %s)",
-                (user_id, user_name or "", question, answer, datetime.utcnow()),
-            )
-        else:
-            cur.execute(
-                "INSERT INTO interactions (user_id, user_name, question, answer, created_at) VALUES (?, ?, ?, ?, ?)",
-                (user_id, user_name or "", question, answer, datetime.utcnow().isoformat()),
-            )
+        cur.execute(
+            "INSERT INTO interactions (user_id, user_name, question, answer, created_at) VALUES (?, ?, ?, ?, ?)",
+            (user_id, user_name or "", question, answer, datetime.utcnow().isoformat()),
+        )
         conn.commit()
     except Exception:
         pass
@@ -498,31 +420,21 @@ def _query_kb(query: str, limit: int = 3) -> list[dict]:
     try:
         conn = _get_conn()
         cur = conn.cursor()
-        if DATABASE_URL:
-            # Simple ILIKE-based search for Postgres (could be replaced by to_tsvector later)
-            pattern = f"%{query}%"
+        # Try FTS query first, fallback to LIKE
+        try:
             cur.execute(
-                "SELECT title, content, source FROM kb_docs WHERE content ILIKE %s OR title ILIKE %s LIMIT %s",
-                (pattern, pattern, limit),
+                "SELECT title, content, source FROM kb_docs WHERE kb_docs MATCH ? LIMIT ?",
+                (query, limit),
             )
             rows = cur.fetchall()
             return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
-        else:
-            # Try FTS query first, fallback to LIKE
-            try:
-                cur.execute(
-                    "SELECT title, content, source FROM kb_docs WHERE kb_docs MATCH ? LIMIT ?",
-                    (query, limit),
-                )
-                rows = cur.fetchall()
-                return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
-            except Exception:
-                cur.execute(
-                    "SELECT title, content, source FROM kb_docs WHERE content LIKE ? OR title LIKE ? LIMIT ?",
-                    (f"%{query}%", f"%{query}%", limit),
-                )
-                rows = cur.fetchall()
-                return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
+        except Exception:
+            cur.execute(
+                "SELECT title, content, source FROM kb_docs WHERE content LIKE ? OR title LIKE ? LIMIT ?",
+                (f"%{query}%", f"%{query}%", limit),
+            )
+            rows = cur.fetchall()
+            return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
     except Exception:
         return []
     finally:
