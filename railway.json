@@ -1,0 +1,18 @@
+{
+  "services": [
+    {
+      "name": "worker",
+      "startCommand": "python beexo-telegram-bot/bot.py",
+      "env": {
+        "TZ": "America/Argentina/Buenos_Aires"
+      }
+    }
+  ],
+  "plugins": [
+    {
+      "name": "postgres",
+      "type": "@railway/plugin-postgres",
+      "path": "."
+    }
+  ]
+}
