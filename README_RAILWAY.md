@@ -29,6 +29,21 @@ railway variables set TZ="America/Argentina/Buenos_Aires"
 railway variables set GROQ_API_KEY="<your-groq-key>"
 ```
 
+Railway project & automated setup
+---------------------------------
+
+- Project used: `beexo-telegram-bot` (your Railway project)
+- Service used: `beexo-bot` (worker process)
+- I added the `TARGET_CHAT_ID` for the Beexo Wallet - Comunidad de LatAm group (`-1002324283164`) to the `beexo-bot` service variables, and set `TELEGRAM_BOT_TOKEN` there as well. These variables were set in Railway (not committed to the repo) using:
+
+```bash
+# example (already executed via CLI in this environment)
+railway variable set "TARGET_CHAT_ID=-1002324283164" -s beexo-bot --skip-deploys
+railway variable set "TELEGRAM_BOT_TOKEN=<your-token>" -s beexo-bot --skip-deploys
+```
+
+- Security: tokens and API keys were not added to the repository. If any secret was previously committed, rotate it now.
+
 Notes & important caveats
 
 - The repo contains a `Procfile` that runs `python beexo-telegram-bot/bot.py` as a worker process. Railway will start this worker automatically.
