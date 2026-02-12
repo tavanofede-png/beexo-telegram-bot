@@ -52,6 +52,26 @@ def run_migration_if_requested():
                     continue
             if not found:
                 print(f"beexy_history.db not found in candidates: {candidates}")
+                # Fallback: try to download from MIGRATE_DB_URL if provided
+                migrate_db_url = os.getenv("MIGRATE_DB_URL")
+                if migrate_db_url:
+                    print(f"MIGRATE_DB_URL provided, attempting download from: {migrate_db_url}")
+                    try:
+                        import httpx
+
+                        resp = httpx.get(migrate_db_url, follow_redirects=True, timeout=60.0)
+                        if resp.status_code == 200:
+                            os.makedirs(os.path.dirname(expected), exist_ok=True)
+                            with open(expected, "wb") as f:
+                                f.write(resp.content)
+                            print(f"Downloaded migrate DB to {expected}")
+                            found = True
+                        else:
+                            print(f"Failed to download DB: HTTP {resp.status_code}")
+                    except Exception as _e:
+                        print("Error downloading MIGRATE_DB_URL:", _e)
+                else:
+                    print("No MIGRATE_DB_URL configured; skipping download fallback.")
 
         # Run the migration script using the same Python interpreter
         completed = subprocess.run(
