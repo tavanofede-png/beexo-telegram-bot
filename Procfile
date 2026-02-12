@@ -1,1 +1,1 @@
-worker: python beexo-telegram-bot/bot.py
+worker: python start.py
