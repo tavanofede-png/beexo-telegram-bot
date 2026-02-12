@@ -2,6 +2,8 @@ python-telegram-bot[job-queue]
 python-dotenv
 Pillow
 httpx
+# DuckDuckGo search helper
+duckduckgo_search
 # Optional Postgres support on Railway
 psycopg2-binary
 # removed psycopg2-binary per rollback
