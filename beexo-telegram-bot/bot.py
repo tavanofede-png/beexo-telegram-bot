@@ -32,6 +32,8 @@ print(f"📁 Loading .env from: {dotenv_path}")
 # Force .env values to override any existing environment variables
 load_dotenv(dotenv_path, override=True)
 logging.basicConfig(level=logging.INFO)
+# Silenciar mensajes informativos de APScheduler que saturan los logs
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
 
 print(f"🔑 TOKEN starts with: {os.environ.get('TELEGRAM_BOT_TOKEN', 'NOT_SET')[:20]}...")
