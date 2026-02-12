@@ -41,7 +41,11 @@ print(f"💬 TARGET_CHAT_ID (raw): {os.environ.get('TARGET_CHAT_ID', 'NOT_SET')}
 
 
 TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-TARGET_CHAT_ID = int(os.environ["TARGET_CHAT_ID"])
+# Backwards-compatible: allow a single TARGET_CHAT_ID or a comma-separated TARGET_CHAT_IDS
+_raw_targets = os.environ.get("TARGET_CHAT_IDS") or os.environ.get("TARGET_CHAT_ID")
+if not _raw_targets:
+    raise RuntimeError("TARGET_CHAT_ID or TARGET_CHAT_IDS must be set in environment")
+TARGET_CHAT_IDS = [int(x.strip()) for x in str(_raw_targets).split(",") if x.strip()]
 TZ = ZoneInfo(os.getenv("TZ", "America/Argentina/Buenos_Aires"))
 
 
@@ -234,33 +238,36 @@ def contains_wallet_keywords(text: str) -> bool:
 
 
 async def morning_job(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=TARGET_CHAT_ID,
-        text=random.choice(GOOD_MORNING),
-        parse_mode=ParseMode.MARKDOWN
-    )
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid,
+            text=random.choice(GOOD_MORNING),
+            parse_mode=ParseMode.MARKDOWN
+        )
 
 
 async def night_job(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=TARGET_CHAT_ID,
-        text=random.choice(GOOD_NIGHT),
-        parse_mode=ParseMode.MARKDOWN
-    )
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid,
+            text=random.choice(GOOD_NIGHT),
+            parse_mode=ParseMode.MARKDOWN
+        )
 
 
 async def engagement_job(context: ContextTypes.DEFAULT_TYPE):
     if random.random() < 0.6:
         t = random.choice(TRIVIAS)
-        await context.bot.send_poll(
-            chat_id=TARGET_CHAT_ID,
-            question=t["q"],
-            options=t["options"],
-            type="quiz",
-            correct_option_id=t["correct"],
-            is_anonymous=False,
-            explanation=t["explain"],
-        )
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_poll(
+                chat_id=cid,
+                question=t["q"],
+                options=t["options"],
+                type="quiz",
+                correct_option_id=t["correct"],
+                is_anonymous=False,
+                explanation=t["explain"],
+            )
     else:
         q, opts = random.choice(POLLS)
         await context.bot.send_poll(
@@ -277,16 +284,20 @@ async def send_meme_job(context: ContextTypes.DEFAULT_TYPE):
     image_path = os.path.join(MEMES_DIR, meme_file)
     if os.path.exists(image_path):
         with open(image_path, "rb") as photo:
-            await context.bot.send_photo(
-                chat_id=TARGET_CHAT_ID,
-                photo=photo,
-                caption=caption,
-            )
+            for cid in TARGET_CHAT_IDS:
+                # rewind file for each send
+                photo.seek(0)
+                await context.bot.send_photo(
+                    chat_id=cid,
+                    photo=photo,
+                    caption=caption,
+                )
     else:
-        await context.bot.send_message(
-            chat_id=TARGET_CHAT_ID,
-            text=caption
-        )
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_message(
+                chat_id=cid,
+                text=caption
+            )
     print(f"🎭 Meme enviado: {meme_file}")
 
 
@@ -314,12 +325,14 @@ async def crypto_news_meme_job(context: ContextTypes.DEFAULT_TYPE):
         path, caption = generate_news_meme(data)
         if path and os.path.exists(path):
             with open(path, "rb") as photo:
-                await context.bot.send_photo(
-                    chat_id=TARGET_CHAT_ID,
-                    photo=photo,
-                    caption=caption,
-                    parse_mode=ParseMode.MARKDOWN,
-                )
+                for cid in TARGET_CHAT_IDS:
+                    photo.seek(0)
+                    await context.bot.send_photo(
+                        chat_id=cid,
+                        photo=photo,
+                        caption=caption,
+                        parse_mode=ParseMode.MARKDOWN,
+                    )
             print(f"📰 Meme cripto enviado: {os.path.basename(path)}")
         else:
             print("📰 No se pudo generar meme cripto (sin datos)")
@@ -335,15 +348,16 @@ async def auto_trivia_job(context: ContextTypes.DEFAULT_TYPE):
     """Envía una trivia al grupo automáticamente cada ~2 días."""
     try:
         t = random.choice(TRIVIAS)
-        await context.bot.send_poll(
-            chat_id=TARGET_CHAT_ID,
-            question=t["q"],
-            options=t["options"],
-            type="quiz",
-            correct_option_id=t["correct"],
-            is_anonymous=False,
-            explanation=t["explain"],
-        )
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_poll(
+                chat_id=cid,
+                question=t["q"],
+                options=t["options"],
+                type="quiz",
+                correct_option_id=t["correct"],
+                is_anonymous=False,
+                explanation=t["explain"],
+            )
         print("🧩 Trivia automática enviada")
     except Exception as e:
         print(f"⚠️ Error en auto_trivia_job: {e}")
@@ -449,22 +463,24 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE):
             else:
                 lines.append(f"{emoji} {icon} *{symbol}*: ${price:.4f} ({sign}{change:.1f}%)")
     lines.append(f"\n_Actualizado: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')}_")
-    await context.bot.send_message(
-        chat_id=TARGET_CHAT_ID,
-        text="\n".join(lines),
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid,
+            text="\n".join(lines),
+            parse_mode=ParseMode.MARKDOWN,
+        )
     print("📊 Resumen cripto diario enviado")
 
 
 async def weekly_fun_fact_job(context: ContextTypes.DEFAULT_TYPE):
     """Envía un dato curioso de cripto una vez por semana."""
     fact = random.choice(CRYPTO_FUN_FACTS)
-    await context.bot.send_message(
-        chat_id=TARGET_CHAT_ID,
-        text=fact,
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid,
+            text=fact,
+            parse_mode=ParseMode.MARKDOWN,
+        )
     print("🧠 Dato curioso enviado")
 
 
@@ -473,11 +489,12 @@ async def ephemerides_job(context: ContextTypes.DEFAULT_TYPE):
     today = datetime.now(TZ)
     key = (today.month, today.day)
     if key in CRYPTO_EPHEMERIDES:
-        await context.bot.send_message(
-            chat_id=TARGET_CHAT_ID,
-            text=CRYPTO_EPHEMERIDES[key],
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_message(
+                chat_id=cid,
+                text=CRYPTO_EPHEMERIDES[key],
+                parse_mode=ParseMode.MARKDOWN,
+            )
         print(f"📅 Efeméride enviada: {key[0]}/{key[1]}")
 
 
@@ -508,12 +525,13 @@ async def weekly_news_job(context: ContextTypes.DEFAULT_TYPE):
         source = r.get("source", "")
         lines.append(f"*{i}.* [{title}]({url})" + (f" — _{source}_" if source else ""))
     lines.append(f"\n_Resumen semanal — {datetime.now(TZ).strftime('%d/%m/%Y')}_")
-    await context.bot.send_message(
-        chat_id=TARGET_CHAT_ID,
-        text="\n".join(lines),
-        parse_mode=ParseMode.MARKDOWN,
-        disable_web_page_preview=True,
-    )
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid,
+            text="\n".join(lines),
+            parse_mode=ParseMode.MARKDOWN,
+            disable_web_page_preview=True,
+        )
     print("📰 Noticias semanales enviadas")
 
 
