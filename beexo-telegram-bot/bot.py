@@ -270,12 +270,13 @@ async def engagement_job(context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         q, opts = random.choice(POLLS)
-        await context.bot.send_poll(
-            chat_id=TARGET_CHAT_ID,
-            question=q,
-            options=opts,
-            is_anonymous=False
-        )
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_poll(
+                chat_id=cid,
+                question=q,
+                options=opts,
+                is_anonymous=False
+            )
 
 
 async def send_meme_job(context: ContextTypes.DEFAULT_TYPE):
@@ -1032,14 +1033,33 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
-    # Detectar mención por @username o por nombre "beexy"
+    # Detectar mención por @username o por nombre "beexy" (mejorada)
     me = await context.bot.get_me()
-    bot_mention = f"@{me.username}".lower()
+    bot_username = (me.username or "").lower()
+    bot_mention = f"@{bot_username}"
     text_lower = text.lower()
-    mentioned = bot_mention in text_lower or "beexy" in text_lower
+
+    # Soportar variantes como "beexy", "bee xy", "bee-xy", "bee_xy"
+    beexy_pattern = re.compile(r"\bbee[\s\-_]?xy\b", re.IGNORECASE)
+
+    # Considerar también cuando se responde a un mensaje del bot (reply)
+    is_reply_to_bot = False
+    try:
+        if msg.reply_to_message and msg.reply_to_message.from_user and msg.reply_to_message.from_user.is_bot:
+            is_reply_to_bot = True
+    except Exception:
+        is_reply_to_bot = False
+
+    mentioned = is_reply_to_bot or (bot_username and (f"@{bot_username}" in text_lower)) or bool(beexy_pattern.search(text))
     if mentioned:
-        # Extraer la pregunta sin la mención
-        question = text_lower.replace(bot_mention, "").replace("beexy", "").strip()
+        # Extraer la pregunta sin la mención / username
+        question = text
+        # remover @username literal
+        if bot_username:
+            question = re.sub(fr"@{re.escape(bot_username)}", "", question, flags=re.IGNORECASE)
+        # remover variantes del nombre
+        question = beexy_pattern.sub("", question)
+        question = question.strip().lower()
         if len(question) < 3:
             await msg.reply_text(
                 "🐝 ¡Hola! Soy *BeeXy*. Preguntame lo que quieras.\n"
@@ -1076,7 +1096,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     print("🐝 Iniciando BeeXy - Beexo Telegram Bot...")
-    print(f"📍 Chat ID objetivo: {TARGET_CHAT_ID}")
+    print(f"📍 Chat ID objetivo: {TARGET_CHAT_IDS}")
     print(f"🌍 Zona horaria: {TZ}")
     
     async def post_init(application):
