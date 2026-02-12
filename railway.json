@@ -4,7 +4,8 @@
       "name": "worker",
       "startCommand": "python beexo-telegram-bot/bot.py",
       "env": {
-        "TZ": "America/Argentina/Buenos_Aires"
+        "TZ": "America/Argentina/Buenos_Aires",
+        "GROQ_API_KEY": "<REPLACE_WITH_GROQ_API_KEY>"
       }
     }
   ],
