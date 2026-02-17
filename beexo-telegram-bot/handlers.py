@@ -234,6 +234,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         return
 
     text = msg.text
+    logger.info("📩 Mensaje recibido en chat %s (tipo: %s): %s", msg.chat_id, msg.chat.type, text[:20])
     bd = _get_bot_data(context)
 
     # ── Anti-scam ──
