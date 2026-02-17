@@ -35,6 +35,7 @@ from commands import (
     recordar_cmd,
     report_cmd,
     precio_cmd,
+    id_cmd,
 )
 from jobs import (
     morning_job,
@@ -112,6 +113,7 @@ def main() -> None:
     app.add_handler(CommandHandler("recordar", recordar_cmd))
     app.add_handler(CommandHandler("report", report_cmd))
     app.add_handler(CommandHandler("precio", precio_cmd))
+    app.add_handler(CommandHandler("id", id_cmd))
 
     # ── Mensajes ──
     app.add_handler(MessageHandler(

@@ -435,3 +435,23 @@ async def report_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         )
     except Exception:
         pass
+
+
+async def id_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Comando /id — muestra el ID del chat y del usuario."""
+    chat = update.effective_chat
+    user = update.effective_user
+    if not chat or not update.message:
+        return
+
+    text = (
+        f"📋 *Información*\n\n"
+        f"🆔 Chat ID: `{chat.id}`\n"
+        f"👤 Usuario: {user.first_name}\n"
+        f"🔢 User ID: `{user.id}`\n"
+        f"📝 Tipo: {chat.type}\n"
+    )
+    if chat.title:
+        text += f"📛 Grupo: {chat.title}\n"
+
+    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
