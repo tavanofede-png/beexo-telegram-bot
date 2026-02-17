@@ -41,7 +41,6 @@ _KEY_LAST_SCAM = "last_scam_alert_at"
 _KEY_LAST_EMOTION = "last_emotion_at"
 _KEY_WELCOMED = "recently_welcomed"
 _KEY_BOT_INFO = "bot_info"
-_KEY_RATE_LIMITS = "rate_limits"
 
 
 def _get_bot_data(context: ContextTypes.DEFAULT_TYPE) -> dict:
@@ -49,28 +48,6 @@ def _get_bot_data(context: ContextTypes.DEFAULT_TYPE) -> dict:
     return context.bot_data
 
 
-# ═══════════════════════════════════════════════════════════════
-# RATE LIMITING
-# ═══════════════════════════════════════════════════════════════
-
-def _check_rate_limit(context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
-    """Retorna True si el usuario puede hacer una request. False si excedió el límite."""
-    from config import RATE_LIMIT_WINDOW, RATE_LIMIT_MAX
-    bd = _get_bot_data(context)
-    limits: dict = bd.setdefault(_KEY_RATE_LIMITS, {})
-    now = datetime.now(TZ)
-
-    user_data = limits.get(user_id, {"timestamps": []})
-    # Limpiar timestamps viejos
-    cutoff = now - timedelta(seconds=RATE_LIMIT_WINDOW)
-    user_data["timestamps"] = [ts for ts in user_data["timestamps"] if ts > cutoff]
-
-    if len(user_data["timestamps"]) >= RATE_LIMIT_MAX:
-        return False
-
-    user_data["timestamps"].append(now)
-    limits[user_id] = user_data
-    return True
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -305,17 +282,10 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         img_req = detect_image_request(question)
         if img_req:
             action, topic = img_req
-            # Rate limit para imágenes
-            if not _check_rate_limit(context, update.effective_user.id):
-                await safe_reply(msg, "⏳ Estás haciendo muchas consultas. Esperá un momento.")
-                return
             await handle_image_request(msg, action, topic)
             return
 
-        # Rate limit para IA
-        if not _check_rate_limit(context, update.effective_user.id):
-            await safe_reply(msg, "⏳ Estás haciendo muchas consultas. Esperá un momento.")
-            return
+
 
         thinking_msg = await safe_reply(msg, "🐝 Pensando...")
         user_name = update.effective_user.username or update.effective_user.first_name or ""

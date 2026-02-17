@@ -15,7 +15,7 @@ from telegram.ext import ContextTypes
 
 from config import TZ, MEMES_DIR, logger
 from content import POLLS
-from handlers import handle_image_request, _check_rate_limit, reminder_fire, safe_reply
+from handlers import handle_image_request, reminder_fire, safe_reply
 from db import save_report, save_reminder
 from ai_chat import ask_ai, COIN_ALIASES
 from meme_pool import pick_meme, use_and_replace
@@ -145,9 +145,6 @@ async def ask_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             parse_mode=ParseMode.MARKDOWN,
         )
         return
-    if not _check_rate_limit(context, update.effective_user.id):
-        await update.message.reply_text("⏳ Estás haciendo muchas consultas. Esperá un momento.")
-        return
     question = " ".join(context.args)
     thinking_msg = await update.message.reply_text("🤖 Pensando...")
     user_name = update.effective_user.username or update.effective_user.first_name or ""
@@ -163,9 +160,6 @@ async def imagen_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             parse_mode=ParseMode.MARKDOWN,
         )
         return
-    if not _check_rate_limit(context, update.effective_user.id):
-        await update.message.reply_text("⏳ Estás haciendo muchas consultas. Esperá un momento.")
-        return
     query = " ".join(context.args)
     await handle_image_request(update.message, "search", query)
 
@@ -177,9 +171,6 @@ async def generar_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             "🎨 Usá el comando así:\n`/generar un astronauta en la luna con bitcoin`",
             parse_mode=ParseMode.MARKDOWN,
         )
-        return
-    if not _check_rate_limit(context, update.effective_user.id):
-        await update.message.reply_text("⏳ Estás haciendo muchas consultas. Esperá un momento.")
         return
     prompt = " ".join(context.args)
     await handle_image_request(update.message, "generate", prompt)

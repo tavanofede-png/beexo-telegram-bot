@@ -48,8 +48,7 @@ GROQ_MODEL: str = "llama-3.3-70b-versatile"  # legacy
 MAX_AI_HISTORY: int = 8
 
 # ── Rate limiting ──
-RATE_LIMIT_WINDOW: int = 60  # segundos
-RATE_LIMIT_MAX: int = 5      # máximo de requests por ventana
+
 
 # ── Startup log (seguro, sin filtrar token) ──
 logger.info("📁 .env cargado desde: %s", _dotenv_path)
