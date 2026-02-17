@@ -412,7 +412,7 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
 
     try:
         client = _get_gemini_client()
-        response = client.models.generate_content(
+        response = await client.aio.models.generate_content(
             model=GEMINI_MODEL,
             contents=gemini_contents,
             config={
@@ -453,6 +453,8 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
             history.pop()
 
         error_str = str(e).lower()
+        logger.warning("Error en ask_ai: %s — %s", type(e).__name__, e)
+
         if "429" in error_str or "resource_exhausted" in error_str:
             import asyncio
             # Reintentar con backoff exponencial (hasta 5 intentos)
@@ -461,7 +463,7 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
                 logger.info("Gemini 429 — reintento %d/5 en %ds...", attempt, delay)
                 await asyncio.sleep(delay)
                 try:
-                    retry_resp = _get_gemini_client().models.generate_content(
+                    retry_resp = await _get_gemini_client().aio.models.generate_content(
                         model=GEMINI_MODEL,
                         contents=gemini_contents,
                         config={
@@ -473,11 +475,12 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
                     answer = (retry_resp.text or "").strip()
                     if answer:
                         return answer
-                except Exception:
+                except Exception as retry_err:
+                    logger.info("Reintento %d falló: %s", attempt, retry_err)
                     continue
             return "⏳ La API de Gemini está saturada. Intentá de nuevo en un minuto."
         if "timeout" in error_str:
             return "⏳ La IA tardó demasiado en responder. Intentá de nuevo."
 
-        logger.warning("Error en ask_ai (Gemini): %s", e)
         return f"❌ Error inesperado: {type(e).__name__}"
+
