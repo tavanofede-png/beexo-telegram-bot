@@ -20,6 +20,18 @@ from ai_chat import ask_ai
 from image_tools import search_image, generate_image, detect_image_request, _mentions_real_person
 
 
+async def safe_reply(msg, text: str, **kwargs):
+    """reply_text con fallback a send_message si el mensaje original fue borrado."""
+    try:
+        return await msg.reply_text(text, **kwargs)
+    except Exception:
+        try:
+            return await msg.chat.send_message(text, **kwargs)
+        except Exception as e:
+            logger.warning("No se pudo responder: %s", e)
+            return None
+
+
 # ═══════════════════════════════════════════════════════════════
 # ESTADO (almacenado en bot_data para thread-safety)
 # ═══════════════════════════════════════════════════════════════
@@ -253,7 +265,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         last = bd.get(_KEY_LAST_SCAM)
         if last is None or (now - last) > timedelta(minutes=SCAM_ALERT_COOLDOWN_MIN):
             bd[_KEY_LAST_SCAM] = now
-            await msg.reply_text(SCAM_ALERT, parse_mode=ParseMode.MARKDOWN)
+            await safe_reply(msg, SCAM_ALERT, parse_mode=ParseMode.MARKDOWN)
 
     # ── Mención al bot ──
     bot_info = bd.get(_KEY_BOT_INFO)
@@ -280,7 +292,8 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         question = beexy_pattern.sub("", question).strip().lower()
 
         if len(question) < 3:
-            await msg.reply_text(
+            await safe_reply(
+                msg,
                 "🐝 ¡Hola! Soy *BeeXy*. Preguntame lo que quieras.\n"
                 "Ejemplo: `BeeXy ¿qué es DeFi?`\n"
                 "También puedo buscar o generar imágenes 🎨",
@@ -294,20 +307,24 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
             action, topic = img_req
             # Rate limit para imágenes
             if not _check_rate_limit(context, update.effective_user.id):
-                await msg.reply_text("⏳ Estás haciendo muchas consultas. Esperá un momento.")
+                await safe_reply(msg, "⏳ Estás haciendo muchas consultas. Esperá un momento.")
                 return
             await handle_image_request(msg, action, topic)
             return
 
         # Rate limit para IA
         if not _check_rate_limit(context, update.effective_user.id):
-            await msg.reply_text("⏳ Estás haciendo muchas consultas. Esperá un momento.")
+            await safe_reply(msg, "⏳ Estás haciendo muchas consultas. Esperá un momento.")
             return
 
-        thinking_msg = await msg.reply_text("🐝 Pensando...")
+        thinking_msg = await safe_reply(msg, "🐝 Pensando...")
         user_name = update.effective_user.username or update.effective_user.first_name or ""
         answer = await ask_ai(update.effective_user.id, question, user_name)
-        await thinking_msg.edit_text(answer)
+        try:
+            await thinking_msg.edit_text(answer)
+        except Exception:
+            # Si no se puede editar, intentar enviar como mensaje nuevo
+            await context.bot.send_message(chat_id=msg.chat_id, text=answer)
         return
 
     # ── Reacciones emocionales ──

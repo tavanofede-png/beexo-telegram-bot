@@ -15,7 +15,7 @@ from telegram.ext import ContextTypes
 
 from config import TZ, MEMES_DIR, logger
 from content import POLLS
-from handlers import handle_image_request, _check_rate_limit, reminder_fire
+from handlers import handle_image_request, _check_rate_limit, reminder_fire, safe_reply
 from db import save_report, save_reminder
 from ai_chat import ask_ai, COIN_ALIASES
 from meme_pool import pick_meme, use_and_replace
@@ -29,7 +29,8 @@ import os
 # ═══════════════════════════════════════════════════════════════
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(
+    await safe_reply(
+        update.message,
         "🐝 *Soy BeeXy, tu asistente cripto*\n\n"
         "📚 *Info*\n"
         "/rules — Reglas del grupo\n"
