@@ -115,7 +115,7 @@ def main() -> None:
 
     # ── Mensajes ──
     app.add_handler(MessageHandler(
-        filters.TEXT & ~filters.COMMAND & filters.ChatType.GROUPS,
+        filters.TEXT & ~filters.COMMAND,
         on_message,
     ))
     app.add_handler(MessageHandler(
