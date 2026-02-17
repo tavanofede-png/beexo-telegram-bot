@@ -454,7 +454,24 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
 
         error_str = str(e).lower()
         if "429" in error_str or "resource_exhausted" in error_str:
-            return "⏳ Demasiadas consultas. Esperá unos segundos y volvé a preguntar."
+            # Reintentar una vez después de una pausa
+            import asyncio
+            logger.info("Gemini 429 — reintentando en 3s...")
+            await asyncio.sleep(3)
+            try:
+                retry_resp = _get_gemini_client().models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=gemini_contents,
+                    config={
+                        "system_instruction": SYSTEM_PROMPT,
+                        "max_output_tokens": 700,
+                        "temperature": 0.7,
+                    },
+                )
+                answer = (retry_resp.text or "").strip() or "🐝 No tengo respuesta para eso."
+                return answer
+            except Exception:
+                return "⏳ La API de Gemini está saturada. Intentá de nuevo en unos segundos."
         if "timeout" in error_str:
             return "⏳ La IA tardó demasiado en responder. Intentá de nuevo."
 
