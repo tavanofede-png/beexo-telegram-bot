@@ -42,7 +42,7 @@ DB_PATH: str = os.path.join(_script_dir, "beexy_history.db")
 
 # ── Constantes ──
 SCAM_ALERT_COOLDOWN_MIN: int = 5
-GEMINI_MODEL: str = "gemini-2.0-flash"
+GEMINI_MODEL: str = "gemini-flash-latest"
 GROQ_URL: str = "https://api.groq.com/openai/v1/chat/completions"  # legacy
 GROQ_MODEL: str = "llama-3.3-70b-versatile"  # legacy
 MAX_AI_HISTORY: int = 8
