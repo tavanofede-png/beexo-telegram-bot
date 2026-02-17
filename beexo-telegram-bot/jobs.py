@@ -1,0 +1,263 @@
+"""
+Jobs automáticos programados de BeeXy.
+Incluye: mensajes diarios, memes, resumen cripto, noticias,
+trivias, efemérides, datos curiosos y memes de noticias cripto.
+"""
+
+import os
+import random
+from datetime import datetime, time, timedelta
+
+import httpx
+from telegram.constants import ParseMode
+from telegram.ext import ContextTypes
+
+from config import TARGET_CHAT_IDS, TZ, MEMES_DIR, logger
+from content import GOOD_MORNING, GOOD_NIGHT, POLLS
+from trivias_data import TRIVIAS_DATA as TRIVIAS
+from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
+from meme_pool import pick_meme, use_and_replace, init_pool
+
+
+# ═══════════════════════════════════════════════════════════════
+# UTILIDADES
+# ═══════════════════════════════════════════════════════════════
+
+def time_until(target_time: time) -> float:
+    """Calcula los segundos desde ahora hasta un time() dado hoy."""
+    now = datetime.now(TZ)
+    target_dt = now.replace(hour=target_time.hour, minute=target_time.minute, second=0, microsecond=0)
+    if target_dt <= now:
+        target_dt += timedelta(days=1)
+    delta = (target_dt - now).total_seconds()
+    return max(delta, 60)
+
+
+# ═══════════════════════════════════════════════════════════════
+# JOBS DIARIOS
+# ═══════════════════════════════════════════════════════════════
+
+async def morning_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid, text=random.choice(GOOD_MORNING),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+
+
+async def night_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid, text=random.choice(GOOD_NIGHT),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+
+
+async def engagement_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    if random.random() < 0.6:
+        t = random.choice(TRIVIAS)
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_poll(
+                chat_id=cid, question=t["q"], options=t["options"],
+                type="quiz", correct_option_id=t["correct"],
+                is_anonymous=False, explanation=t["explain"],
+            )
+    else:
+        q, opts = random.choice(POLLS)
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_poll(
+                chat_id=cid, question=q, options=opts, is_anonymous=False,
+            )
+
+
+# ═══════════════════════════════════════════════════════════════
+# MEMES
+# ═══════════════════════════════════════════════════════════════
+
+async def send_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Envía un meme del pool y genera un reemplazo."""
+    meme = pick_meme()
+    if meme is None:
+        logger.warning("🎭 No hay memes disponibles en el pool")
+        return
+
+    meme_file = meme["file"]
+    caption = f'{meme["top"]}... {meme["bottom"]}'
+    image_path = os.path.join(MEMES_DIR, meme_file)
+
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as photo:
+            for cid in TARGET_CHAT_IDS:
+                photo.seek(0)
+                await context.bot.send_photo(chat_id=cid, photo=photo, caption=caption)
+    else:
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_message(chat_id=cid, text=caption)
+
+    logger.info("🎭 Meme enviado: %s", meme_file)
+
+    # Eliminar usado y generar reemplazo vía Groq
+    await use_and_replace(meme)
+
+
+async def schedule_daily_memes(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Planifica 2 memes a horas aleatorias del día (entre 9:00 y 22:00)."""
+    hours = sorted(random.sample(range(9, 22), 2))
+    for h in hours:
+        minute = random.randint(0, 59)
+        send_time = time(h, minute, tzinfo=TZ)
+        context.job_queue.run_once(
+            send_meme_job, when=time_until(send_time),
+            name=f"meme_diario_{h}_{minute}",
+        )
+        logger.info("🎭 Meme programado para hoy a las %02d:%02d", h, minute)
+
+
+async def crypto_news_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Busca datos del mercado cripto y genera un meme en vivo."""
+    try:
+        from crypto_news_meme import fetch_crypto_data, generate_news_meme
+        logger.info("📰 Generando meme de noticias cripto...")
+        data = await fetch_crypto_data()
+        path, caption = generate_news_meme(data)
+        if path and os.path.exists(path):
+            with open(path, "rb") as photo:
+                for cid in TARGET_CHAT_IDS:
+                    photo.seek(0)
+                    await context.bot.send_photo(
+                        chat_id=cid, photo=photo, caption=caption,
+                        parse_mode=ParseMode.MARKDOWN,
+                    )
+            logger.info("📰 Meme cripto enviado: %s", os.path.basename(path))
+        else:
+            logger.info("📰 No se pudo generar meme cripto (sin datos)")
+    except Exception as e:
+        logger.warning("⚠️ Error en crypto_news_meme_job: %s", e)
+    finally:
+        next_delay = random.uniform(18, 28) * 3600
+        context.job_queue.run_once(crypto_news_meme_job, when=next_delay, name="crypto_meme")
+        logger.info("📰 Próximo meme cripto en %.1f horas", next_delay / 3600)
+
+
+# ═══════════════════════════════════════════════════════════════
+# RESUMEN CRIPTO DIARIO
+# ═══════════════════════════════════════════════════════════════
+
+async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Envía resumen diario del mercado cripto a las 10am."""
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get(
+                "https://api.coingecko.com/api/v3/simple/price",
+                params={
+                    "ids": "bitcoin,ethereum,binancecoin,solana,ripple,cardano,dogecoin,polkadot",
+                    "vs_currencies": "usd",
+                    "include_24hr_change": "true",
+                },
+            )
+            data = resp.json()
+    except Exception as e:
+        logger.warning("⚠️ Error en crypto summary: %s", e)
+        return
+
+    coins_map = {
+        "bitcoin": ("BTC", "₿"), "ethereum": ("ETH", "⟠"), "binancecoin": ("BNB", "🔶"),
+        "solana": ("SOL", "◎"), "ripple": ("XRP", "💧"), "cardano": ("ADA", "🔵"),
+        "dogecoin": ("DOGE", "🐕"), "polkadot": ("DOT", "⬡"),
+    }
+    lines = ["📊 *Resumen Diario del Mercado Cripto*\n"]
+    for coin_id, (symbol, icon) in coins_map.items():
+        if coin_id in data:
+            d = data[coin_id]
+            price = d.get("usd", 0)
+            change = d.get("usd_24h_change", 0) or 0
+            emoji = "🟢" if change >= 0 else "🔴"
+            sign = "+" if change >= 0 else ""
+            if price >= 1:
+                lines.append(f"{emoji} {icon} *{symbol}*: ${price:,.2f} ({sign}{change:.1f}%)")
+            else:
+                lines.append(f"{emoji} {icon} *{symbol}*: ${price:.4f} ({sign}{change:.1f}%)")
+    lines.append(f"\n_Actualizado: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')}_")
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid, text="\n".join(lines), parse_mode=ParseMode.MARKDOWN,
+        )
+    logger.info("📊 Resumen cripto diario enviado")
+
+
+# ═══════════════════════════════════════════════════════════════
+# OTROS JOBS
+# ═══════════════════════════════════════════════════════════════
+
+async def weekly_fun_fact_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Envía un dato curioso de cripto una vez por semana."""
+    fact = random.choice(CRYPTO_FUN_FACTS)
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid, text=fact, parse_mode=ParseMode.MARKDOWN,
+        )
+    logger.info("🧠 Dato curioso enviado")
+
+
+async def ephemerides_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Publica la efeméride cripto del día si existe."""
+    today = datetime.now(TZ)
+    key = (today.month, today.day)
+    if key in CRYPTO_EPHEMERIDES:
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_message(
+                chat_id=cid, text=CRYPTO_EPHEMERIDES[key],
+                parse_mode=ParseMode.MARKDOWN,
+            )
+        logger.info("📅 Efeméride enviada: %d/%d", key[0], key[1])
+
+
+async def weekly_news_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Envía las 5 noticias cripto más importantes — lunes 11am."""
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            results = list(ddgs.news(
+                "criptomonedas bitcoin ethereum crypto noticias",
+                region="es-ar", max_results=8,
+            ))
+    except Exception as e:
+        logger.warning("⚠️ Error en weekly news: %s", e)
+        return
+
+    if not results:
+        logger.info("📰 No se encontraron noticias")
+        return
+
+    lines = ["📰 *Las 5 noticias cripto de la semana*\n"]
+    for i, r in enumerate(results[:5], 1):
+        title = r.get("title", "Sin título")
+        url = r.get("url", "")
+        source = r.get("source", "")
+        lines.append(f"*{i}.* [{title}]({url})" + (f" — _{source}_" if source else ""))
+    lines.append(f"\n_Resumen semanal — {datetime.now(TZ).strftime('%d/%m/%Y')}_")
+    for cid in TARGET_CHAT_IDS:
+        await context.bot.send_message(
+            chat_id=cid, text="\n".join(lines),
+            parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True,
+        )
+    logger.info("📰 Noticias semanales enviadas")
+
+
+async def auto_trivia_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Envía una trivia al grupo automáticamente cada ~2 días."""
+    try:
+        t = random.choice(TRIVIAS)
+        for cid in TARGET_CHAT_IDS:
+            await context.bot.send_poll(
+                chat_id=cid, question=t["q"], options=t["options"],
+                type="quiz", correct_option_id=t["correct"],
+                is_anonymous=False, explanation=t["explain"],
+            )
+        logger.info("🧩 Trivia automática enviada")
+    except Exception as e:
+        logger.warning("⚠️ Error en auto_trivia_job: %s", e)
+    finally:
+        next_delay = random.uniform(36, 60) * 3600
+        context.job_queue.run_once(auto_trivia_job, when=next_delay, name="auto_trivia")
+        logger.info("🧩 Próxima trivia auto en %.1f horas", next_delay / 3600)

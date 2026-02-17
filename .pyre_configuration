@@ -1,0 +1,11 @@
+{
+  "source_directories": [
+    "beexo-telegram-bot",
+    "tests"
+  ],
+  "search_path": [
+    {
+      "site-package": ".venv/Lib/site-packages"
+    }
+  ]
+}

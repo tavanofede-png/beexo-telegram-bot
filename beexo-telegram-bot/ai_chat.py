@@ -1,63 +1,62 @@
 """
 Módulo de IA para Beexo Community Bot.
-Usa Groq (gratis) con Llama 3.3 70B para responder preguntas.
+Usa Google Gemini (gratis) para responder preguntas.
 Incluye datos de mercado en tiempo real vía CoinGecko
 y búsqueda web gratuita vía DuckDuckGo.
 """
 
-import os
 import re
-import httpx
-import sqlite3
-from typing import Optional, Tuple
-from datetime import datetime
+from typing import Optional
 
-# DuckDuckGo search is optional at import time; import lazily inside functions
+import httpx
+from google import genai
+from google.genai import Client as GeminiClient
+
+from config import GEMINI_API_KEY, GEMINI_MODEL, MAX_AI_HISTORY, logger
+from db import log_interaction, query_kb, save_ai_message, load_ai_history
+
+# DuckDuckGo search is optional at import time
 try:
     from duckduckgo_search import DDGS  # type: ignore
 except Exception:
     DDGS = None
 
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL = "llama-3.3-70b-versatile"
+# ── Inicializar cliente Gemini ──
+_gemini_client: Optional[GeminiClient] = None
 
-
-def _get_api_key() -> str:
-    return os.getenv("GROQ_API_KEY", "")
+def _get_gemini_client() -> GeminiClient:
+    """Obtiene o crea el cliente Gemini (lazy init)."""
+    global _gemini_client
+    if _gemini_client is None:
+        _gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    return _gemini_client
 
 
 # ═══════════════════════════════════════════════════════════════
 # BÚSQUEDA WEB (DuckDuckGo - gratis, sin API key)
 # ═══════════════════════════════════════════════════════════════
 
-# Patrones que indican que la pregunta necesita info actualizada
 SEARCH_TRIGGERS = [
-    # Actualidad / noticias
     "quién es", "quien es", "qué es", "que es", "qué pasó", "que paso",
     "qué significa", "que significa",
     "noticia", "noticias", "hoy", "ahora", "actualmente", "actual",
     "último", "ultima", "últimas", "reciente", "recientes",
     "2024", "2025", "2026",
-    # Preguntas de conocimiento general
     "cuántos", "cuantos", "cuántas", "cuantas",
     "cuándo", "cuando", "dónde", "donde",
     "cómo", "como se", "por qué", "por que",
     "capital de", "presidente de", "fundador de",
     "historia de", "origen de",
-    # Clima, deportes, cultura
     "clima", "temperatura", "tiempo en",
     "resultado", "partido", "gol",
     "película", "pelicula", "serie", "canción", "cancion",
     "libro", "autor",
-    # Tecnología
     "versión", "version", "update", "lanzamiento",
     "cómo funciona", "como funciona",
-    # Comparaciones
     "diferencia entre", "vs", "mejor",
     "comparar", "comparación",
 ]
 
-# Preguntas simples que NO necesitan búsqueda
 NO_SEARCH_PATTERNS = [
     "hola", "chau", "gracias", "buenas", "buen día",
     "jaja", "xd", "lol",
@@ -67,28 +66,23 @@ NO_SEARCH_PATTERNS = [
 def _needs_web_search(text: str) -> bool:
     """Determina si la pregunta se beneficiaría de una búsqueda web."""
     text_lower = text.lower().strip()
-
-    # Si es un saludo o muy corto, no buscar
     if len(text_lower) < 8:
         return False
     for pat in NO_SEARCH_PATTERNS:
         if text_lower.startswith(pat):
             return False
-
-    # Preguntas con signos de interrogación probablemente necesitan búsqueda
     if "?" in text:
         return True
-
-    # Verificar triggers
     for trigger in SEARCH_TRIGGERS:
         if trigger in text_lower:
             return True
-
     return False
 
 
 def _web_search(query: str, max_results: int = 5) -> str:
     """Busca en la web vía DuckDuckGo y devuelve resultados formateados."""
+    if DDGS is None:
+        return ""
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, region="es-ar", max_results=max_results))
@@ -111,6 +105,8 @@ def _web_search(query: str, max_results: int = 5) -> str:
 
 def _web_news(query: str, max_results: int = 3) -> str:
     """Busca noticias recientes vía DuckDuckGo."""
+    if DDGS is None:
+        return ""
     try:
         with DDGS() as ddgs:
             results = list(ddgs.news(query, region="es-ar", max_results=max_results))
@@ -175,6 +171,7 @@ PRICE_KEYWORDS = [
 
 
 def _detect_coins(text: str) -> list[str]:
+    """Detecta mencion de criptomonedas en el texto."""
     text_lower = text.lower()
     found: list[str] = []
     seen_ids: set[str] = set()
@@ -187,6 +184,7 @@ def _detect_coins(text: str) -> list[str]:
 
 
 def _is_price_question(text: str) -> bool:
+    """Detecta si el texto pregunta sobre precios."""
     text_lower = text.lower()
     return any(kw in text_lower for kw in PRICE_KEYWORDS)
 
@@ -300,236 +298,56 @@ SYSTEM_PROMPT = (
     "o /generar para crear imágenes con IA. También pueden pedírtelo directamente "
     "(ej: 'BeeXy generame una imagen de...' o 'BeeXy buscame una foto de...'). "
     "Mencioná esta capacidad si el usuario parece necesitarlo.\n"
+    "13. También pueden consultar precios directamente con /precio btc eth sol.\n"
 )
 
 # ═══════════════════════════════════════════════════════════════
 # HISTORIAL Y LÓGICA PRINCIPAL
 # ═══════════════════════════════════════════════════════════════
 
+# Cache en memoria (se hidrata desde DB al primer acceso)
 _user_histories: dict[int, list[dict]] = {}
-MAX_HISTORY = 8
+_user_loaded: set[int] = set()
 
 
 def _get_history(user_id: int) -> list[dict]:
+    """Obtiene historial del usuario, cargando desde DB si es necesario."""
+    if user_id not in _user_loaded:
+        _user_loaded.add(user_id)
+        db_history = load_ai_history(user_id, limit=MAX_AI_HISTORY)
+        if db_history:
+            _user_histories[user_id] = db_history
     if user_id not in _user_histories:
         _user_histories[user_id] = []
     return _user_histories[user_id]
 
 
-def _trim_history(user_id: int):
+def _trim_history(user_id: int) -> None:
     hist = _user_histories.get(user_id, [])
-    if len(hist) > MAX_HISTORY:
-        _user_histories[user_id] = hist[-MAX_HISTORY:]
+    if len(hist) > MAX_AI_HISTORY:
+        _user_histories[user_id] = hist[-MAX_AI_HISTORY:]
 
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "beexy_history.db")
-DATABASE_URL = os.getenv("DATABASE_URL")  # if provided by Railway (Postgres)
-
-
-def _get_conn():
-    """Return a DB connection: Postgres if DATABASE_URL set, otherwise SQLite."""
-    if DATABASE_URL:
-        import psycopg2
-        # psycopg2 will parse the DATABASE_URL
-        return psycopg2.connect(DATABASE_URL)
-    # SQLite (local file)
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
-
-
-def _init_db():
-    """Initialize SQLite schema used by the bot (interactions, kb_docs, reports, reminders)."""
-    conn = None
-    try:
-        conn = _get_conn()
-        cur = conn.cursor()
-        if DATABASE_URL:
-            # Postgres schema
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS interactions (
-                    id BIGSERIAL PRIMARY KEY,
-                    user_id BIGINT,
-                    user_name TEXT,
-                    question TEXT,
-                    answer TEXT,
-                    created_at TIMESTAMP
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS kb_docs (
-                    id BIGSERIAL PRIMARY KEY,
-                    title TEXT,
-                    content TEXT,
-                    source TEXT
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reports (
-                    id BIGSERIAL PRIMARY KEY,
-                    reporter_id BIGINT,
-                    reporter_name TEXT,
-                    reported_id BIGINT,
-                    reported_name TEXT,
-                    chat_id BIGINT,
-                    reason TEXT,
-                    created_at TIMESTAMP,
-                    handled INTEGER DEFAULT 0
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reminders (
-                    id BIGSERIAL PRIMARY KEY,
-                    user_id BIGINT,
-                    user_name TEXT,
-                    chat_id BIGINT,
-                    text TEXT,
-                    scheduled_at BIGINT,
-                    created_at TIMESTAMP,
-                    fired INTEGER DEFAULT 0
-                )
-                """
-            )
-        else:
-            # SQLite schema (local dev)
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS interactions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    user_name TEXT,
-                    question TEXT,
-                    answer TEXT,
-                    created_at TEXT
-                )
-                """
-            )
-            # Try to create FTS5 virtual table; fallback to normal table
-            try:
-                cur.execute("CREATE VIRTUAL TABLE IF NOT EXISTS kb_docs USING fts5(title, content, source);")
-            except Exception:
-                cur.execute("CREATE TABLE IF NOT EXISTS kb_docs (title TEXT, content TEXT, source TEXT);")
-
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reports (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    reporter_id INTEGER,
-                    reporter_name TEXT,
-                    reported_id INTEGER,
-                    reported_name TEXT,
-                    chat_id INTEGER,
-                    reason TEXT,
-                    created_at TEXT,
-                    handled INTEGER DEFAULT 0
-                )
-                """
-            )
-
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS reminders (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    user_name TEXT,
-                    chat_id INTEGER,
-                    text TEXT,
-                    scheduled_at INTEGER,
-                    created_at TEXT,
-                    fired INTEGER DEFAULT 0
-                )
-                """
-            )
-        conn.commit()
-    except Exception:
-        pass
-    finally:
-        try:
-            if conn:
-                conn.close()
-        except Exception:
-            pass
-
-
-def _log_interaction(user_id: int, user_name: str | None, question: str, answer: str):
-    try:
-        conn = _get_conn()
-        cur = conn.cursor()
-        if DATABASE_URL:
-            cur.execute(
-                "INSERT INTO interactions (user_id, user_name, question, answer, created_at) VALUES (%s, %s, %s, %s, %s)",
-                (user_id, user_name or "", question, answer, datetime.utcnow()),
-            )
-        else:
-            cur.execute(
-                "INSERT INTO interactions (user_id, user_name, question, answer, created_at) VALUES (?, ?, ?, ?, ?)",
-                (user_id, user_name or "", question, answer, datetime.utcnow().isoformat()),
-            )
-        conn.commit()
-    except Exception:
-        pass
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
-
-
-def _query_kb(query: str, limit: int = 3) -> list[dict]:
-    """Busca en la KB (FTS) y devuelve los resultados más relevantes."""
-    if not query:
-        return []
-    try:
-        conn = _get_conn()
-        cur = conn.cursor()
-        if DATABASE_URL:
-            pattern = f"%{query}%"
-            cur.execute(
-                "SELECT title, content, source FROM kb_docs WHERE content ILIKE %s OR title ILIKE %s LIMIT %s",
-                (pattern, pattern, limit),
-            )
-            rows = cur.fetchall()
-            return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
-        else:
-            # Try FTS query first, fallback to LIKE
-            try:
-                cur.execute(
-                    "SELECT title, content, source FROM kb_docs WHERE kb_docs MATCH ? LIMIT ?",
-                    (query, limit),
-                )
-                rows = cur.fetchall()
-                return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
-            except Exception:
-                cur.execute(
-                    "SELECT title, content, source FROM kb_docs WHERE content LIKE ? OR title LIKE ? LIMIT ?",
-                    (f"%{query}%", f"%{query}%", limit),
-                )
-                rows = cur.fetchall()
-                return [{"title": r[0], "content": r[1], "source": r[2] or ""} for r in rows]
-    except Exception:
-        return []
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
-
-
-_init_db()
+def _history_to_gemini_contents(history: list[dict]) -> list[dict]:
+    """Convierte historial interno (role/content) al formato Gemini (role/parts)."""
+    contents = []
+    for msg in history:
+        role = msg["role"]
+        # Gemini usa "user" y "model" (no "assistant")
+        gemini_role = "model" if role == "assistant" else "user"
+        contents.append({
+            "role": gemini_role,
+            "parts": [{"text": msg["content"]}],
+        })
+    return contents
 
 
 async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> str:
-    """Envía una pregunta a Groq y devuelve la respuesta."""
-    api_key = _get_api_key()
-    if not api_key:
+    """Envía una pregunta a Google Gemini y devuelve la respuesta."""
+    if not GEMINI_API_KEY:
         return (
             "⚠️ La función de IA no está configurada todavía.\n"
-            "Un administrador debe agregar la GROQ_API_KEY."
+            "Un administrador debe agregar la GEMINI_API_KEY."
         )
 
     # ── Recopilar contexto externo ──
@@ -557,20 +375,18 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
 
     # 2) Búsqueda web si la pregunta lo amerita
     if _needs_web_search(question):
-        # Intentar noticias primero si parece actualidad
         news_kw = ["noticia", "hoy", "ahora", "reciente", "último", "ultima"]
         if any(kw in question.lower() for kw in news_kw):
             news = _web_news(question)
             if news:
                 context_parts.append(news)
-        # Siempre hacer búsqueda general
         search = _web_search(question)
         if search:
             context_parts.append(search)
 
-    # 1.5) Buscar en knowledge base local (FTS) y añadir al contexto si hay matches
+    # 3) Buscar en knowledge base local
     try:
-        kb_hits = _query_kb(question, limit=3)
+        kb_hits = query_kb(question, limit=3)
         if kb_hits:
             kb_lines = ["INFORMACIÓN RELEVANTE (Knowledge Base):"]
             for k in kb_hits:
@@ -590,47 +406,57 @@ async def ask_ai(user_id: int, question: str, user_name: str | None = None) -> s
         user_msg = f"{question}\n\n[CONTEXTO INTERNO - NO MOSTRAR LITERALMENTE AL USUARIO]:\n{extra}"
 
     history.append({"role": "user", "content": user_msg})
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
+
+    # Convertir historial a formato Gemini
+    gemini_contents = _history_to_gemini_contents(history)
 
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(
-                GROQ_URL,
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": MODEL,
-                    "messages": messages,
-                    "max_tokens": 700,
-                    "temperature": 0.7,
-                },
-            )
+        client = _get_gemini_client()
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=gemini_contents,
+            config={
+                "system_instruction": SYSTEM_PROMPT,
+                "max_output_tokens": 700,
+                "temperature": 0.7,
+            },
+        )
 
-        if resp.status_code == 429:
-            return "⏳ Demasiadas consultas. Esperá unos segundos y volvé a preguntar."
+        # Validar respuesta
+        if not response or not response.text:
+            history.pop()
+            return "❌ La IA no generó una respuesta. Intentá reformular la pregunta."
 
-        if resp.status_code != 200:
-            return f"❌ Error al consultar la IA (código {resp.status_code}). Intentá de nuevo."
+        answer = response.text.strip()
 
-        data = resp.json()
-        answer = data["choices"][0]["message"]["content"].strip()
+        if not answer:
+            history.pop()
+            return "❌ La IA devolvió una respuesta vacía. Intentá de nuevo."
 
         # Guardar respuesta en historial (sin el contexto inyectado)
         history[-1] = {"role": "user", "content": question}
         history.append({"role": "assistant", "content": answer})
         _trim_history(user_id)
 
-        # Registrar en base de datos (no bloquear si falla)
+        # Persistir en DB (no bloquear si falla)
         try:
-            _log_interaction(user_id, user_name, question, answer)
+            log_interaction(user_id, user_name, question, answer)
+            save_ai_message(user_id, "user", question)
+            save_ai_message(user_id, "assistant", answer)
         except Exception:
             pass
 
         return answer
 
-    except httpx.TimeoutException:
-        return "⏳ La IA tardó demasiado en responder. Intentá de nuevo."
     except Exception as e:
+        if history and history[-1].get("role") == "user":
+            history.pop()
+
+        error_str = str(e).lower()
+        if "429" in error_str or "resource_exhausted" in error_str:
+            return "⏳ Demasiadas consultas. Esperá unos segundos y volvé a preguntar."
+        if "timeout" in error_str:
+            return "⏳ La IA tardó demasiado en responder. Intentá de nuevo."
+
+        logger.warning("Error en ask_ai (Gemini): %s", e)
         return f"❌ Error inesperado: {type(e).__name__}"

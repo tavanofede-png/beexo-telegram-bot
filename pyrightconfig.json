@@ -1,0 +1,14 @@
+{
+  "include": [
+    "beexo-telegram-bot",
+    "tests"
+  ],
+  "extraPaths": [
+    "beexo-telegram-bot"
+  ],
+  "pythonVersion": "3.12",
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "none",
+  "venvPath": ".",
+  "venv": ".venv"
+}
