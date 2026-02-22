@@ -26,6 +26,7 @@ from commands import (
     help_cmd,
     rules_cmd,
     faq_cmd,
+    meme_cmd,
     trivia_cmd,
     poll_cmd,
     ask_cmd,
@@ -61,6 +62,11 @@ async def post_init(app) -> None:
     # Inicializar DB
     init_db()
 
+    # Inicializar pool de memes
+    from meme_pool import init_pool
+    pool_count = init_pool()
+    logger.info("🎭 Pool de memes listo: %d memes disponibles", pool_count)
+
     # Reprogramar recordatorios pendientes
     import time as time_mod
     now = int(time_mod.time())
@@ -94,6 +100,7 @@ def main() -> None:
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CommandHandler("rules", rules_cmd))
     app.add_handler(CommandHandler("faq", faq_cmd))
+    app.add_handler(CommandHandler("meme", meme_cmd))
     app.add_handler(CommandHandler("trivia", trivia_cmd))
     app.add_handler(CommandHandler("poll", poll_cmd))
     app.add_handler(CommandHandler("ask", ask_cmd))

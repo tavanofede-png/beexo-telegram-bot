@@ -17,6 +17,7 @@ from chat_roles import community_chats, memes_chat
 from content import GOOD_MORNING, GOOD_NIGHT, POLLS
 from trivias_data import TRIVIAS_DATA as TRIVIAS
 from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
+from meme_pool import pick_meme, use_and_replace, init_pool
 
 
 # ═══════════════════════════════════════════════════════════════
