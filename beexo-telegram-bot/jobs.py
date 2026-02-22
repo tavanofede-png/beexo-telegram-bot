@@ -17,7 +17,6 @@ from chat_roles import community_chats, memes_chat
 from content import GOOD_MORNING, GOOD_NIGHT, POLLS
 from trivias_data import TRIVIAS_DATA as TRIVIAS
 from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
-from meme_pool import pick_meme, use_and_replace, init_pool
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -70,73 +69,6 @@ async def engagement_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 chat_id=cid, question=q, options=opts, is_anonymous=False,
             )
 
-
-# ═══════════════════════════════════════════════════════════════
-# MEMES
-# ═══════════════════════════════════════════════════════════════
-
-async def send_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Envía un meme del pool y genera un reemplazo."""
-    meme = pick_meme()
-    if meme is None:
-        logger.warning("🎭 No hay memes disponibles en el pool")
-        return
-
-    meme_file = meme["file"]
-    caption = f'{meme["top"]}... {meme["bottom"]}'
-    image_path = os.path.join(MEMES_DIR, meme_file)
-
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as photo:
-            for cid in memes_chat():
-                photo.seek(0)
-                await context.bot.send_photo(chat_id=cid, photo=photo, caption=caption)
-    else:
-        for cid in memes_chat():
-            await context.bot.send_message(chat_id=cid, text=caption)
-
-    logger.info("🎭 Meme enviado: %s", meme_file)
-
-    # Eliminar usado y generar reemplazo vía Groq
-    await use_and_replace(meme)
-
-
-async def schedule_daily_memes(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Planifica 2 memes a horas aleatorias del día (entre 9:00 y 22:00)."""
-    hours = sorted(random.sample(range(9, 22), 2))
-    for h in hours:
-        minute = random.randint(0, 59)
-        send_time = time(h, minute, tzinfo=TZ)
-        context.job_queue.run_once(
-            send_meme_job, when=time_until(send_time),
-            name=f"meme_diario_{h}_{minute}",
-        )
-        logger.info("🎭 Meme programado para hoy a las %02d:%02d", h, minute)
-
-
-async def crypto_news_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Genera un meme de alta calidad con IA basado en noticias cripto."""
-    try:
-        from crypto_news_meme import generate_news_meme
-        logger.info("📰 Generando meme de noticias cripto con IA...")
-        path, caption = await generate_news_meme()
-        if path and os.path.exists(path):
-            with open(path, "rb") as photo:
-                for cid in memes_chat():
-                    photo.seek(0)
-                    await context.bot.send_photo(
-                        chat_id=cid, photo=photo, caption=caption,
-                        parse_mode=ParseMode.MARKDOWN,
-                    )
-            logger.info("📰 Meme cripto IA enviado: %s", os.path.basename(path))
-        else:
-            logger.info("📰 No se pudo generar meme cripto")
-    except Exception as e:
-        logger.warning("⚠️ Error en crypto_news_meme_job: %s", e)
-    finally:
-        next_delay = random.uniform(18, 28) * 3600
-        context.job_queue.run_once(crypto_news_meme_job, when=next_delay, name="crypto_meme")
-        logger.info("📰 Próximo meme cripto en %.1f horas", next_delay / 3600)
 
 
 # ═══════════════════════════════════════════════════════════════

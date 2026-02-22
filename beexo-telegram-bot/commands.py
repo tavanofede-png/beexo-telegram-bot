@@ -18,7 +18,6 @@ from content import POLLS
 from handlers import handle_image_request, reminder_fire, safe_reply
 from db import save_report, save_reminder, get_top_users, get_user_stats
 from ai_chat import ask_ai, COIN_ALIASES
-from meme_pool import pick_meme, use_and_replace
 from trivias_data import TRIVIAS_DATA as TRIVIAS
 
 import os
@@ -42,7 +41,6 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🎮 *Comunidad*\n"
         "/trivia — Trivia cripto\n"
         "/poll — Encuesta\n"
-        "/meme — Meme random\n"
         "/top — Ranking de usuarios\n"
         "/me — Tu nivel y XP\n\n"
         "💰 *Mercado*\n"
@@ -56,7 +54,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "`BeeXy dibujame un gato astronauta`\n"
         "`BeeXy buscame una foto de bitcoin`\n\n"
         "🤖 *Automático:* resumen diario 10am, noticias lunes 11am, "
-        "efemérides, datos curiosos, memes y trivias.",
+        "efemérides, datos curiosos, y trivias.",
         parse_mode=ParseMode.MARKDOWN,
     )
 
@@ -96,25 +94,6 @@ async def faq_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 # ═══════════════════════════════════════════════════════════════
 # COMANDOS DE COMUNIDAD
 # ═══════════════════════════════════════════════════════════════
-
-async def meme_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    meme = pick_meme()
-    if meme is None:
-        await update.message.reply_text("🎭 No hay memes disponibles, se están generando nuevos...")
-        return
-
-    meme_file = meme["file"]
-    caption = f'{meme["top"]}... {meme["bottom"]}'
-    image_path = os.path.join(MEMES_DIR, meme_file)
-
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as photo:
-            await update.message.reply_photo(photo=photo, caption=caption)
-    else:
-        await update.message.reply_text(caption)
-
-    # Eliminar usado y generar reemplazo
-    await use_and_replace(meme)
 
 
 async def trivia_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
