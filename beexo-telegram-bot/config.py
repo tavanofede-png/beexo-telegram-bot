@@ -51,7 +51,7 @@ MEMES_DIR: str = os.path.join(_script_dir, "memes")
 DB_PATH: str = os.path.join(_script_dir, "beexy_history.db")
 
 # ── Constantes ──
-SCAM_ALERT_COOLDOWN_MIN: int = 5
+SCAM_ALERT_COOLDOWN_MIN: int = 1
 GEMINI_MODEL: str = "gemini-2.5-flash"
 GEMINI_IMAGE_MODEL: str = "models/gemini-2.5-flash-image"
 GROQ_URL: str = "https://api.groq.com/openai/v1/chat/completions"  # legacy
