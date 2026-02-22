@@ -43,6 +43,10 @@ from jobs import (
     morning_job,
     night_job,
     engagement_job,
+    daily_crypto_summary_job,
+    weekly_news_job,
+    weekly_fun_fact_job,
+    ephemerides_job,
     auto_trivia_job,
     time_until,
 )
