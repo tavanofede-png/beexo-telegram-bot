@@ -270,7 +270,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     # ── Mención al bot ──
     bot_info = bd.get(_KEY_BOT_INFO)
     bot_username = (bot_info.username or "").lower() if bot_info else ""
-    beexy_pattern = re.compile(r"\bbee[\s\-_]?xy\b", re.IGNORECASE)
+    beexy_pattern = re.compile(r"bee[\s\-_]?xy", re.IGNORECASE)
 
     is_reply_to_bot = False
     try:
