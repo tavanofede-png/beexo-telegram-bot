@@ -143,7 +143,7 @@ async def _maybe_react_emotion(msg, text: str, context: ContextTypes.DEFAULT_TYP
     last = bd.get(_KEY_LAST_EMOTION)
     if last and (now - last) < timedelta(minutes=15):
         return
-    if len(text) < 10:
+    if len(text) < 4:
         return
 
     text_lower = text.lower()
@@ -154,7 +154,9 @@ async def _maybe_react_emotion(msg, text: str, context: ContextTypes.DEFAULT_TYP
             break
     if not detected:
         return
-    if random.random() > 0.25:
+    
+    # 25% prob de ignorar (75% de que reaccione)
+    if random.random() > 0.75:
         return
 
     bd[_KEY_LAST_EMOTION] = now
