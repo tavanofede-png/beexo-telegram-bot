@@ -71,6 +71,7 @@ KEYWORDS_WALLET = [
     "perdí mis fondos", "no puedo acceder", "fondos bloqueados",
     "desbloquear", "congelaron", "frozen", "revertir transacción",
     "recuperar fondos", "cuenta suspendida", "actualización de seguridad",
+    "bug", "problema", "error", "falla", "ayuda con",
     # Phishing
     "ingresá tu", "ingresa tu", "completar datos", "iniciar sesión",
     "ingresa tu frase", "login",
