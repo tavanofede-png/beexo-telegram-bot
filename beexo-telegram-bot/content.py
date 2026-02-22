@@ -52,23 +52,28 @@ KEYWORDS_WALLET = [
     "dm", "privado", "por privado", "mensaje privado", "inbox",
     # Soporte falso
     "soporte", "soporte técnico", "support", "ayuda", "help",
-    "admin", "administrador", "moderador",
+    "admin", "administrador", "moderador", "soporte oficial",
+    "atención al cliente", "customer service",
     # Scams clásicos
     "validar wallet", "verificar wallet", "sincronizar", "sync",
     "conectar wallet", "connect wallet", "migrar", "migrate",
-    "actualizar wallet", "upgrade",
+    "actualizar wallet", "upgrade", "wallet connect", "dapp",
+    "nodo", "node", "web3", "vincular bimetálica", "vincular wallet",
     # Regalos / airdrops falsos
     "airdrop", "claim", "regalo", "giveaway", "sorteo",
-    "token gratis", "gratis", "free", "whitelist",
+    "token gratis", "gratis", "free", "whitelist", "bonus", "reward",
     # Inversión fraudulenta
     "inversión garantizada", "rendimiento garantizado", "duplicar",
     "enviar para recibir", "ganancia segura", "100% profit",
+    "doblar tu inversión", "doblamos tus cryptos",
     # Usuario vulnerable
     "me hackearon", "hackeado", "me robaron", "robaron mis fondos",
     "perdí mis fondos", "no puedo acceder", "fondos bloqueados",
-    "desbloquear", "congelaron", "frozen",
+    "desbloquear", "congelaron", "frozen", "revertir transacción",
+    "recuperar fondos", "cuenta suspendida", "actualización de seguridad",
     # Phishing
-    "ingresá tu", "ingresa tu", "completar datos",
+    "ingresá tu", "ingresa tu", "completar datos", "iniciar sesión",
+    "ingresa tu frase", "login",
 ]
 
 KEYWORDS_SIGNALS = [
