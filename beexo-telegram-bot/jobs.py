@@ -13,6 +13,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from config import TARGET_CHAT_IDS, TZ, MEMES_DIR, logger
+from chat_roles import community_chats, memes_chat
 from content import GOOD_MORNING, GOOD_NIGHT, POLLS
 from trivias_data import TRIVIAS_DATA as TRIVIAS
 from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
@@ -38,7 +39,7 @@ def time_until(target_time: time) -> float:
 # ═══════════════════════════════════════════════════════════════
 
 async def morning_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    for cid in TARGET_CHAT_IDS:
+    for cid in community_chats():
         await context.bot.send_message(
             chat_id=cid, text=random.choice(GOOD_MORNING),
             parse_mode=ParseMode.MARKDOWN,
@@ -46,7 +47,7 @@ async def morning_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def night_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    for cid in TARGET_CHAT_IDS:
+    for cid in community_chats():
         await context.bot.send_message(
             chat_id=cid, text=random.choice(GOOD_NIGHT),
             parse_mode=ParseMode.MARKDOWN,
@@ -56,7 +57,7 @@ async def night_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def engagement_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     if random.random() < 0.6:
         t = random.choice(TRIVIAS)
-        for cid in TARGET_CHAT_IDS:
+        for cid in community_chats():
             await context.bot.send_poll(
                 chat_id=cid, question=t["q"], options=t["options"],
                 type="quiz", correct_option_id=t["correct"],
@@ -64,7 +65,7 @@ async def engagement_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             )
     else:
         q, opts = random.choice(POLLS)
-        for cid in TARGET_CHAT_IDS:
+        for cid in community_chats():
             await context.bot.send_poll(
                 chat_id=cid, question=q, options=opts, is_anonymous=False,
             )
@@ -87,11 +88,11 @@ async def send_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if os.path.exists(image_path):
         with open(image_path, "rb") as photo:
-            for cid in TARGET_CHAT_IDS:
+            for cid in memes_chat():
                 photo.seek(0)
                 await context.bot.send_photo(chat_id=cid, photo=photo, caption=caption)
     else:
-        for cid in TARGET_CHAT_IDS:
+        for cid in memes_chat():
             await context.bot.send_message(chat_id=cid, text=caption)
 
     logger.info("🎭 Meme enviado: %s", meme_file)
@@ -114,23 +115,22 @@ async def schedule_daily_memes(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def crypto_news_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Busca datos del mercado cripto y genera un meme en vivo."""
+    """Genera un meme de alta calidad con IA basado en noticias cripto."""
     try:
-        from crypto_news_meme import fetch_crypto_data, generate_news_meme
-        logger.info("📰 Generando meme de noticias cripto...")
-        data = await fetch_crypto_data()
-        path, caption = generate_news_meme(data)
+        from crypto_news_meme import generate_news_meme
+        logger.info("📰 Generando meme de noticias cripto con IA...")
+        path, caption = await generate_news_meme()
         if path and os.path.exists(path):
             with open(path, "rb") as photo:
-                for cid in TARGET_CHAT_IDS:
+                for cid in memes_chat():
                     photo.seek(0)
                     await context.bot.send_photo(
                         chat_id=cid, photo=photo, caption=caption,
                         parse_mode=ParseMode.MARKDOWN,
                     )
-            logger.info("📰 Meme cripto enviado: %s", os.path.basename(path))
+            logger.info("📰 Meme cripto IA enviado: %s", os.path.basename(path))
         else:
-            logger.info("📰 No se pudo generar meme cripto (sin datos)")
+            logger.info("📰 No se pudo generar meme cripto")
     except Exception as e:
         logger.warning("⚠️ Error en crypto_news_meme_job: %s", e)
     finally:
@@ -178,7 +178,7 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 lines.append(f"{emoji} {icon} *{symbol}*: ${price:.4f} ({sign}{change:.1f}%)")
     lines.append(f"\n_Actualizado: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')}_")
-    for cid in TARGET_CHAT_IDS:
+    for cid in community_chats():
         await context.bot.send_message(
             chat_id=cid, text="\n".join(lines), parse_mode=ParseMode.MARKDOWN,
         )
@@ -192,7 +192,7 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
 async def weekly_fun_fact_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Envía un dato curioso de cripto una vez por semana."""
     fact = random.choice(CRYPTO_FUN_FACTS)
-    for cid in TARGET_CHAT_IDS:
+    for cid in community_chats():
         await context.bot.send_message(
             chat_id=cid, text=fact, parse_mode=ParseMode.MARKDOWN,
         )
@@ -204,22 +204,27 @@ async def ephemerides_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     today = datetime.now(TZ)
     key = (today.month, today.day)
     if key in CRYPTO_EPHEMERIDES:
-        for cid in TARGET_CHAT_IDS:
+        for cid in community_chats():
             await context.bot.send_message(
                 chat_id=cid, text=CRYPTO_EPHEMERIDES[key],
                 parse_mode=ParseMode.MARKDOWN,
             )
-        logger.info("📅 Efeméride enviada: %d/%d", key[0], key[1])
+        logger.info("📅 Efémeride enviada: %d/%d", key[0], key[1])
 
 
 async def weekly_news_job(context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Envía las 5 noticias cripto más importantes — lunes 11am."""
+    """Envía las 5 noticias cripto más importantes — solo los lunes a las 11am."""
+    # Guardia: solo ejecutar los lunes (weekday 0)
+    if datetime.now(TZ).weekday() != 0:
+        logger.info("📰 weekly_news_job omitido: hoy no es lunes")
+        return
+
     try:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
             results = list(ddgs.news(
                 "criptomonedas bitcoin ethereum crypto noticias",
-                region="es-ar", max_results=8,
+                region="es-ar", max_results=5,
             ))
     except Exception as e:
         logger.warning("⚠️ Error en weekly news: %s", e)
@@ -229,14 +234,14 @@ async def weekly_news_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         logger.info("📰 No se encontraron noticias")
         return
 
-    lines = ["📰 *Las 5 noticias cripto de la semana*\n"]
-    for i, r in enumerate(results[:5], 1):
+    lines = ["📰 *Las 5 noticias cripto de la semana* 🗞️\n"]
+    for i, r in enumerate(results, 1):
         title = r.get("title", "Sin título")
         url = r.get("url", "")
         source = r.get("source", "")
         lines.append(f"*{i}.* [{title}]({url})" + (f" — _{source}_" if source else ""))
     lines.append(f"\n_Resumen semanal — {datetime.now(TZ).strftime('%d/%m/%Y')}_")
-    for cid in TARGET_CHAT_IDS:
+    for cid in community_chats():
         await context.bot.send_message(
             chat_id=cid, text="\n".join(lines),
             parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True,
@@ -248,7 +253,7 @@ async def auto_trivia_job(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Envía una trivia al grupo automáticamente cada ~2 días."""
     try:
         t = random.choice(TRIVIAS)
-        for cid in TARGET_CHAT_IDS:
+        for cid in community_chats():
             await context.bot.send_poll(
                 chat_id=cid, question=t["q"], options=t["options"],
                 type="quiz", correct_option_id=t["correct"],

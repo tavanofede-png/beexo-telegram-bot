@@ -16,7 +16,7 @@ from telegram.ext import ContextTypes
 from config import TZ, MEMES_DIR, logger
 from content import POLLS
 from handlers import handle_image_request, reminder_fire, safe_reply
-from db import save_report, save_reminder
+from db import save_report, save_reminder, get_top_users, get_user_stats
 from ai_chat import ask_ai, COIN_ALIASES
 from meme_pool import pick_meme, use_and_replace
 from trivias_data import TRIVIAS_DATA as TRIVIAS
@@ -42,7 +42,9 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🎮 *Comunidad*\n"
         "/trivia — Trivia cripto\n"
         "/poll — Encuesta\n"
-        "/meme — Meme random\n\n"
+        "/meme — Meme random\n"
+        "/top — Ranking de usuarios\n"
+        "/me — Tu nivel y XP\n\n"
         "💰 *Mercado*\n"
         "/precio — Precio de una cripto\n"
         "  Ej: `/precio btc eth sol`\n\n"
@@ -454,4 +456,51 @@ async def id_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if chat.title:
         text += f"📛 Grupo: {chat.title}\n"
 
+    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+
+
+# ═══════════════════════════════════════════════════════════════
+# COMANDOS DE XP / REPUTACIÓN
+# ═══════════════════════════════════════════════════════════════
+
+async def top_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Comando /top — Muestra el leaderboard de XP."""
+    top_users = get_top_users(10)
+    if not top_users:
+        await update.message.reply_text("Todavía no hay usuarios rankeados. ¡Escriban para ganar XP!")
+        return
+        
+    lines = ["🏆 *Top 10 BeeXy Rangers* 🏆\n"]
+    medals = ["🥇", "🥈", "🥉"]
+    
+    for i, u in enumerate(top_users):
+        rank = medals[i] if i < 3 else f"{i+1}."
+        name = u["user_name"] or "Usuario"
+        lines.append(f"{rank} {name} — *Lvl {u['level']}* ({u['xp']} XP)")
+        
+    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.MARKDOWN)
+
+
+async def me_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Comando /me — Muestra tu nivel y XP actual."""
+    user = update.effective_user
+    stats = get_user_stats(user.id)
+    
+    if not stats:
+        await update.message.reply_text(
+            f"Hola {user.first_name}, todavía no tenés XP. ¡Enviá mensajes para subir de nivel!",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        return
+        
+    xp = stats["xp"]
+    level = stats["level"]
+    next_level_xp = (level ** 2) * 25
+    
+    text = (
+        f"📊 *Tus Estadísticas*\n\n"
+        f"👤 *Usuario:* {stats['user_name'] or user.first_name}\n"
+        f"🎖 *Nivel:* {level}\n"
+        f"✨ *Experiencia:* {xp}/{next_level_xp} XP\n"
+    )
     await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)

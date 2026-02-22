@@ -36,6 +36,8 @@ from commands import (
     report_cmd,
     precio_cmd,
     id_cmd,
+    top_cmd,
+    me_cmd,
 )
 from jobs import (
     morning_job,
@@ -114,6 +116,8 @@ def main() -> None:
     app.add_handler(CommandHandler("report", report_cmd))
     app.add_handler(CommandHandler("precio", precio_cmd))
     app.add_handler(CommandHandler("id", id_cmd))
+    app.add_handler(CommandHandler("top", top_cmd))
+    app.add_handler(CommandHandler("me", me_cmd))
 
     # ── Mensajes ──
     app.add_handler(MessageHandler(
@@ -135,19 +139,19 @@ def main() -> None:
     jq.run_daily(morning_job, time=time(8, 30, tzinfo=TZ), name="morning")
     jq.run_daily(night_job, time=time(23, 0, tzinfo=TZ), name="night")
     jq.run_daily(engagement_job, time=time(16, 0, tzinfo=TZ), name="engagement")
-    jq.run_daily(schedule_daily_memes, time=time(9, 0, tzinfo=TZ), name="schedule_memes")
+    # jq.run_daily(schedule_daily_memes, time=time(9, 0, tzinfo=TZ), name="schedule_memes")
     jq.run_daily(daily_crypto_summary_job, time=time(10, 0, tzinfo=TZ), name="crypto_summary")
     jq.run_daily(ephemerides_job, time=time(12, 0, tzinfo=TZ), name="ephemerides")
 
-    jq.run_repeating(weekly_news_job, interval=7 * 86400,
-                     first=time_until(time(11, 0, tzinfo=TZ)), name="weekly_news")
+    jq.run_daily(weekly_news_job, time=time(11, 0, tzinfo=TZ),
+                 days=(0,), name="weekly_news")  # 0 = lunes
     jq.run_repeating(weekly_fun_fact_job, interval=5 * 86400,
                      first=time_until(time(15, 0, tzinfo=TZ)), name="fun_fact")
 
     jq.run_once(auto_trivia_job,
                 when=time_until(time(18, 0, tzinfo=TZ)), name="auto_trivia")
-    jq.run_once(crypto_news_meme_job,
-                when=time_until(time(14, 0, tzinfo=TZ)), name="crypto_meme")
+    # jq.run_once(crypto_news_meme_job,
+    #             when=time_until(time(14, 0, tzinfo=TZ)), name="crypto_meme")
 
     logger.info("✅ BeeXy listo — %d chats configurados", len(TARGET_CHAT_IDS))
     app.run_polling(allowed_updates=Update.ALL_TYPES)

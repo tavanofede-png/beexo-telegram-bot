@@ -15,7 +15,7 @@ from telegram.ext import ContextTypes
 
 from config import TZ, SCAM_ALERT_COOLDOWN_MIN, logger
 from content import SCAM_ALERT, WELCOME_MESSAGES, EMOTION_REACTIONS, contains_wallet_keywords
-from db import mark_reminder_fired
+from db import mark_reminder_fired, add_xp
 from ai_chat import ask_ai
 from image_tools import search_image, generate_image, detect_image_request, _mentions_real_person
 
@@ -41,6 +41,7 @@ _KEY_LAST_SCAM = "last_scam_alert_at"
 _KEY_LAST_EMOTION = "last_emotion_at"
 _KEY_WELCOMED = "recently_welcomed"
 _KEY_BOT_INFO = "bot_info"
+_KEY_XP_COOLDOWN = "xp_cooldown"
 
 
 def _get_bot_data(context: ContextTypes.DEFAULT_TYPE) -> dict:
@@ -244,6 +245,27 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         if last is None or (now - last) > timedelta(minutes=SCAM_ALERT_COOLDOWN_MIN):
             bd[_KEY_LAST_SCAM] = now
             await safe_reply(msg, SCAM_ALERT, parse_mode=ParseMode.MARKDOWN)
+
+    # ── Sistema de Experiencia (XP) ──
+    user_id = msg.from_user.id
+    user_name = msg.from_user.first_name or "Usuario"
+    xp_cd = bd.setdefault(_KEY_XP_COOLDOWN, {})
+    now = datetime.now(TZ)
+    last_xp = xp_cd.get(user_id)
+    
+    if len(text.strip()) >= 5:
+        if not last_xp or (now - last_xp) > timedelta(minutes=1):
+            xp_cd[user_id] = now
+            gained = random.randint(1, 4)
+            _, n_lvl, level_up = add_xp(user_id, user_name, gained)
+            if level_up:
+                # Opcional: avisar nivel
+                await safe_reply(
+                    msg, 
+                    f"🎉 ¡Felicidades [{user_name}](tg://user?id={user_id})! "
+                    f"Has subido al *Nivel {n_lvl}* 🏆", 
+                    parse_mode=ParseMode.MARKDOWN
+                )
 
     # ── Mención al bot ──
     bot_info = bd.get(_KEY_BOT_INFO)

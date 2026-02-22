@@ -121,6 +121,15 @@ def _init_postgres(cur: Any) -> None:
             created_at TIMESTAMP
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user_stats (
+            user_id BIGINT PRIMARY KEY,
+            user_name TEXT,
+            xp INTEGER DEFAULT 0,
+            level INTEGER DEFAULT 1,
+            last_message_at TIMESTAMP
+        )
+    """)
 
 
 def _init_sqlite(cur: Any) -> None:
@@ -170,6 +179,15 @@ def _init_sqlite(cur: Any) -> None:
             role TEXT,
             content TEXT,
             created_at TEXT
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user_stats (
+            user_id INTEGER PRIMARY KEY,
+            user_name TEXT,
+            xp INTEGER DEFAULT 0,
+            level INTEGER DEFAULT 1,
+            last_message_at TEXT
         )
     """)
 
@@ -338,3 +356,105 @@ def load_ai_history(user_id: int, limit: int = 8) -> list[dict]:
             return [{"role": r[0], "content": r[1]} for r in rows]
     except Exception:
         return []
+
+
+# ═══════════════════════════════════════════════════════════════
+# RANKING Y REPUTACIÓN (XP)
+# ═══════════════════════════════════════════════════════════════
+
+def add_xp(user_id: int, user_name: str, amount: int) -> tuple[int, int, bool]:
+    """
+    Suma XP a un usuario. Si sube de nivel, level_up es True. 
+    Retorna (xp_actual, nivel_actual, level_up).
+    """
+    try:
+        p = _ph()
+        with get_conn() as conn:
+            cur = conn.cursor()
+            
+            if _is_postgres():
+                cur.execute(
+                    f"INSERT INTO user_stats (user_id, user_name, xp, level, last_message_at) "
+                    f"VALUES ({p}, {p}, {p}, 1, {p}) "
+                    f"ON CONFLICT (user_id) DO UPDATE SET "
+                    f"user_name = EXCLUDED.user_name, "
+                    f"xp = user_stats.xp + EXCLUDED.xp, "
+                    f"last_message_at = EXCLUDED.last_message_at "
+                    f"RETURNING xp, level",
+                    (user_id, user_name, amount, _now_str())
+                )
+                row = cur.fetchone()
+                if not row:
+                    return 0, 1, False
+                xp, level = row[0], row[1]
+            else:
+                cur.execute("SELECT xp, level FROM user_stats WHERE user_id = ?", (user_id,))
+                row = cur.fetchone()
+                now = _now_str()
+                if row:
+                    xp = row[0] + amount
+                    level = row[1]
+                    cur.execute(
+                        "UPDATE user_stats SET user_name = ?, xp = ?, last_message_at = ? WHERE user_id = ?",
+                        (user_name, xp, now, user_id)
+                    )
+                else:
+                    xp = amount
+                    level = 1
+                    cur.execute(
+                        "INSERT INTO user_stats (user_id, user_name, xp, level, last_message_at) VALUES (?, ?, ?, ?, ?)",
+                        (user_id, user_name, xp, level, now)
+                    )
+            
+            # Fórmula simple: Nivel = int(sqrt(XP / 25)) + 1
+            # L1: 0, L2: 25, L3: 100, L4: 225, L5: 400
+            new_level = int((xp / 25) ** 0.5) + 1
+            
+            level_up = new_level > level
+            if level_up:
+                if _is_postgres():
+                    cur.execute(f"UPDATE user_stats SET level = {p} WHERE user_id = {p}", (new_level, user_id))
+                else:
+                    cur.execute("UPDATE user_stats SET level = ? WHERE user_id = ?", (new_level, user_id))
+            
+            conn.commit()
+            return xp, new_level, level_up
+    except Exception as e:
+        logger.warning("Error sumando XP: %s", e)
+        return 0, 1, False
+
+
+def get_top_users(limit: int = 10) -> list[dict]:
+    """Devuelve el leaderboard de usuarios."""
+    try:
+        p = _ph()
+        with get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT user_id, user_name, xp, level FROM user_stats "
+                f"ORDER BY xp DESC LIMIT {p}", 
+                (limit,)
+            )
+            rows = cur.fetchall()
+            return [
+                {"user_id": r[0], "user_name": r[1], "xp": r[2], "level": r[3]} 
+                for r in rows
+            ]
+    except Exception as e:
+        logger.warning("Error obteniendo top users: %s", e)
+        return []
+
+
+def get_user_stats(user_id: int) -> dict | None:
+    """Devuelve las estadísticas (XP, nivel) de un usuario."""
+    try:
+        p = _ph()
+        with get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute(f"SELECT user_name, xp, level FROM user_stats WHERE user_id = {p}", (user_id,))
+            r = cur.fetchone()
+            if r:
+                return {"user_name": r[0], "xp": r[1], "level": r[2]}
+    except Exception as e:
+        logger.warning("Error obteniendo stats de usuario: %s", e)
+    return None

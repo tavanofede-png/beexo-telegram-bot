@@ -27,6 +27,16 @@ if not _raw_targets:
     raise RuntimeError("TARGET_CHAT_ID or TARGET_CHAT_IDS must be set in environment")
 TARGET_CHAT_IDS: list[int] = [int(x.strip()) for x in str(_raw_targets).split(",") if x.strip()]
 
+# ── Routing por rol de grupo ──
+_raw_community = os.environ.get("COMMUNITY_CHAT_IDS", "")
+COMMUNITY_CHAT_IDS: list[int] = (
+    [int(x.strip()) for x in _raw_community.split(",") if x.strip()]
+    if _raw_community else []
+)
+
+_raw_memes = os.environ.get("MEMES_CHAT_ID", "")
+MEMES_CHAT_ID: int | None = int(_raw_memes.strip()) if _raw_memes.strip() else None
+
 # ── Timezone ──
 TZ = ZoneInfo(os.getenv("TZ", "America/Argentina/Buenos_Aires"))
 
@@ -42,7 +52,8 @@ DB_PATH: str = os.path.join(_script_dir, "beexy_history.db")
 
 # ── Constantes ──
 SCAM_ALERT_COOLDOWN_MIN: int = 5
-GEMINI_MODEL: str = "gemini-flash-latest"
+GEMINI_MODEL: str = "gemini-2.5-flash"
+GEMINI_IMAGE_MODEL: str = "models/gemini-2.5-flash-image"
 GROQ_URL: str = "https://api.groq.com/openai/v1/chat/completions"  # legacy
 GROQ_MODEL: str = "llama-3.3-70b-versatile"  # legacy
 MAX_AI_HISTORY: int = 8
@@ -54,5 +65,7 @@ MAX_AI_HISTORY: int = 8
 logger.info("📁 .env cargado desde: %s", _dotenv_path)
 logger.info("🔑 TOKEN configurado: %s…", TOKEN[:8])
 logger.info("💬 TARGET_CHAT_IDS: %s", TARGET_CHAT_IDS)
+logger.info("🏘️  COMMUNITY_CHAT_IDS: %s", COMMUNITY_CHAT_IDS or "(usando TARGET_CHAT_IDS como fallback)")
+logger.info("🎭 MEMES_CHAT_ID: %s", MEMES_CHAT_ID or "(no configurado — fallback a community)")
 logger.info("🌍 Timezone: %s", TZ)
 logger.info("🤖 GEMINI_API_KEY: %s", "✅ configurada" if GEMINI_API_KEY else "❌ NO configurada")
