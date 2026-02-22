@@ -166,6 +166,7 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         "dogecoin": ("DOGE", "🐕"), "polkadot": ("DOT", "⬡"),
     }
     lines = ["📊 *Resumen Diario del Mercado Cripto*\n"]
+    valid_coins = 0
     for coin_id, (symbol, icon) in coins_map.items():
         if coin_id in data:
             d = data[coin_id]
@@ -177,6 +178,12 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
                 lines.append(f"{emoji} {icon} *{symbol}*: ${price:,.2f} ({sign}{change:.1f}%)")
             else:
                 lines.append(f"{emoji} {icon} *{symbol}*: ${price:.4f} ({sign}{change:.1f}%)")
+            valid_coins += 1
+            
+    if valid_coins == 0:
+        logger.warning("📊 Resumen cripto diario cancleado: No se obtuvieron datos de precios válidos.")
+        return
+
     lines.append(f"\n_Actualizado: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')}_")
     for cid in community_chats():
         await context.bot.send_message(
