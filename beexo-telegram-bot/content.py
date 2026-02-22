@@ -33,6 +33,13 @@ SCAM_ALERT = (
     "• Pedí ayuda solo en el grupo\n"
 )
 
+SIGNALS_ALERT = (
+    "🚫 *ALERTA ANTI-SPAM*\n\n"
+    "• Están prohibidas las invitaciones a canales VIP o de señales.\n"
+    "• No confíes en 'bots de trading' ni rendimientos mágicos.\n"
+    "• Te recordamos que compartir enlaces no solicitados puede ser motivo de baneo.\n"
+)
+
 KEYWORDS_WALLET = [
     # Seed / claves
     "seed", "seed phrase", "12 palabras", "24 palabras", "frase semilla",
@@ -61,8 +68,18 @@ KEYWORDS_WALLET = [
     "perdí mis fondos", "no puedo acceder", "fondos bloqueados",
     "desbloquear", "congelaron", "frozen",
     # Phishing
-    "formulario", "form", "kyc", "verificar identidad",
     "ingresá tu", "ingresa tu", "completar datos",
+]
+
+KEYWORDS_SIGNALS = [
+    # Palabras clave de grupos de señales
+    "canal de señales", "grupo de señales", "señales vip", "grupo vip",
+    "bot de trading", "trading bot", "rentabilidad diaria", "rendimiento diario",
+    "multiplica tu dinero", "ganancias aseguradas", "ganancias diarias",
+    "pump signal", "unite a mi canal", "únete a mi canal", "unite al canal",
+    "rentabilidad asegurada", "roi garantizado", "inversión segura",
+    "link en mi bio", "sumate a mi equipo", "gana dinero desde tu celular",
+    "libertad financiera", "deja que el bot trabaje por ti"
 ]
 
 # ═══════════════════════════════════════════════════════════════
@@ -155,3 +172,8 @@ def contains_wallet_keywords(text: str) -> bool:
     """Devuelve True si el texto contiene keywords relacionadas con wallets/scams."""
     t = (text or "").lower()
     return any(k in t for k in KEYWORDS_WALLET)
+
+def contains_signals_keywords(text: str) -> bool:
+    """Devuelve True si el texto contiene keywords relacionadas con canales de señales/spam."""
+    t = (text or "").lower()
+    return any(k in t for k in KEYWORDS_SIGNALS)

@@ -14,7 +14,11 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from config import TZ, SCAM_ALERT_COOLDOWN_MIN, logger
-from content import SCAM_ALERT, WELCOME_MESSAGES, EMOTION_REACTIONS, contains_wallet_keywords
+from content import (
+    SCAM_ALERT, WELCOME_MESSAGES, EMOTION_REACTIONS, 
+    contains_wallet_keywords, 
+    SIGNALS_ALERT, contains_signals_keywords
+)
 from db import mark_reminder_fired, add_xp
 from ai_chat import ask_ai
 from image_tools import search_image, generate_image, detect_image_request, _mentions_real_person
@@ -38,6 +42,7 @@ async def safe_reply(msg, text: str, **kwargs):
 
 # Keys para context.bot_data
 _KEY_LAST_SCAM = "last_scam_alert_at"
+_KEY_LAST_SIGNALS = "last_signals_alert_at"
 _KEY_LAST_EMOTION = "last_emotion_at"
 _KEY_WELCOMED = "recently_welcomed"
 _KEY_BOT_INFO = "bot_info"
@@ -245,6 +250,14 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         if last is None or (now - last) > timedelta(minutes=SCAM_ALERT_COOLDOWN_MIN):
             bd[_KEY_LAST_SCAM] = now
             await safe_reply(msg, SCAM_ALERT, parse_mode=ParseMode.MARKDOWN)
+
+    # ── Anti-spam (Señales/Trading) ──
+    if contains_signals_keywords(text):
+        now = datetime.now(TZ)
+        last_sig = bd.get(_KEY_LAST_SIGNALS)
+        if last_sig is None or (now - last_sig) > timedelta(minutes=SCAM_ALERT_COOLDOWN_MIN):
+            bd[_KEY_LAST_SIGNALS] = now
+            await safe_reply(msg, SIGNALS_ALERT, parse_mode=ParseMode.MARKDOWN)
 
     # ── Sistema de Experiencia (XP) ──
     user_id = msg.from_user.id
