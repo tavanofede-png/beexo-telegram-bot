@@ -88,6 +88,12 @@ def _init_postgres(cur: Any) -> None:
         )
     """)
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS reports (
             id BIGSERIAL PRIMARY KEY,
             reporter_id BIGINT,
@@ -147,6 +153,12 @@ def _init_sqlite(cur: Any) -> None:
         cur.execute("CREATE VIRTUAL TABLE IF NOT EXISTS kb_docs USING fts5(title, content, source);")
     except Exception:
         cur.execute("CREATE TABLE IF NOT EXISTS kb_docs (title TEXT, content TEXT, source TEXT);")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -458,3 +470,43 @@ def get_user_stats(user_id: int) -> dict | None:
     except Exception as e:
         logger.warning("Error obteniendo stats de usuario: %s", e)
     return None
+
+
+# ═══════════════════════════════════════════════════════════════
+# CONFIGURACIONES Y ESTADO INTERNO (SETTINGS MIGRATION)
+# ═══════════════════════════════════════════════════════════════
+
+def get_setting(key: str) -> str | None:
+    """Obtiene un valor de la tabla settings."""
+    try:
+        p = _ph()
+        with get_conn() as conn:
+            cur = conn.cursor()
+            cur.execute(f"SELECT value FROM settings WHERE key = {p}", (key,))
+            r = cur.fetchone()
+            return r[0] if r else None
+    except Exception as e:
+        logger.warning("Error leyendo setting %s: %s", key, e)
+    return None
+
+def set_setting(key: str, value: str) -> None:
+    """Guarda (upsert) un valor en la tabla settings."""
+    try:
+        p = _ph()
+        with get_conn() as conn:
+            cur = conn.cursor()
+            if _is_postgres():
+                cur.execute(
+                    f"INSERT INTO settings (key, value) VALUES ({p}, {p}) "
+                    f"ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+                    (key, value)
+                )
+            else:
+                cur.execute(
+                    "INSERT INTO settings (key, value) VALUES (?, ?) "
+                    "ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+                    (key, value)
+                )
+            conn.commit()
+    except Exception as e:
+        logger.warning("Error guardando setting %s: %s", key, e)

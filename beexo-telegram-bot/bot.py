@@ -48,6 +48,7 @@ from jobs import (
     weekly_fun_fact_job,
     ephemerides_job,
     auto_trivia_job,
+    beexo_radio_job,
     time_until,
 )
 
@@ -145,6 +146,9 @@ def main() -> None:
     
     jq.run_daily(weekly_fun_fact_job, time=time(15, 0, tzinfo=TZ),
                  days=(2,), name="fun_fact")
+                 
+    # Revisar Beexo Radio cada 15 minutos (900s)
+    jq.run_repeating(beexo_radio_job, interval=900, first=10, name="beexo_radio")
 
     import random
     trivia_delay = random.uniform(6, 24) * 3600

@@ -17,6 +17,9 @@ from chat_roles import community_chats, memes_chat
 from content import GOOD_MORNING, GOOD_NIGHT, POLLS
 from trivias_data import TRIVIAS_DATA as TRIVIAS
 from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
+from db import get_setting, set_setting
+import re
+import json
 from meme_pool import pick_meme, use_and_replace, init_pool
 
 
@@ -206,3 +209,56 @@ async def auto_trivia_job(context: ContextTypes.DEFAULT_TYPE) -> None:
         next_delay = random.uniform(36, 60) * 3600
         context.job_queue.run_once(auto_trivia_job, when=next_delay, name="auto_trivia")
         logger.info("🧩 Próxima trivia auto en %.1f horas", next_delay / 3600)
+
+async def beexo_radio_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Revisa si hay un nuevo tweet de @beexowallet con 'beexo radio' y lo envía al chat."""
+    try:
+        url = "https://syndication.twitter.com/srv/timeline-profile/screen-name/beexowallet"
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(url)
+            
+        m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.+?)</script>', resp.text)
+        if not m:
+            logger.debug("📻 No se encontró el JSON de Twitter syndication")
+            return
+            
+        data = json.loads(m.group(1))
+        entries = data.get("props", {}).get("pageProps", {}).get("timeline", {}).get("entries", [])
+        
+        last_id_str = get_setting("last_beexo_radio_tweet_id")
+        last_id = int(last_id_str) if last_id_str else 0
+        
+        # Recorremos desde el más antiguo al más nuevo en los resultados parseados
+        # (Twitter devuelve los más nuevos primero, así que invertimos la lista de los válidos)
+        valid_tweets = []
+        for e in entries:
+            tweet = e.get("content", {}).get("tweet", {})
+            if not tweet:
+                continue
+            text = tweet.get("text", "")
+            if "beexo radio" in text.lower():
+                tid_str = tweet.get("id_str")
+                if tid_str:
+                    valid_tweets.append({"id": int(tid_str), "id_str": tid_str, "text": text})
+                    
+        valid_tweets.sort(key=lambda x: x["id"])
+        
+        newest_id_str = None
+        for t in valid_tweets:
+            if t["id"] > last_id:
+                # Nuevo tweet detectado!
+                tweet_url = f"https://x.com/beexowallet/status/{t['id_str']}"
+                for cid in community_chats():
+                    await context.bot.send_message(
+                        chat_id=cid,
+                        text=f"📻 *¡Nuevo Beexo Radio!*\n\n{tweet_url}",
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+                logger.info("📻 Nuevo Beexo Radio enviado: %s", t["id_str"])
+                newest_id_str = t["id_str"]
+                
+        if newest_id_str:
+            set_setting("last_beexo_radio_tweet_id", newest_id_str)
+            
+    except Exception as e:
+        logger.warning("⚠️ Error en beexo_radio_job: %s", e)
