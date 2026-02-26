@@ -1,0 +1,650 @@
+commit e2c5fcdb833b4ac7b8004e72e29d197fac8d6eb0
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 14:33:57 2026 -0300
+
+    feat: add 48 new crypto polls to rotation
+
+diff --git a/beexo-telegram-bot/content.py b/beexo-telegram-bot/content.py
+index ddd8626..e0de118 100644
+--- a/beexo-telegram-bot/content.py
++++ b/beexo-telegram-bot/content.py
+@@ -166,8 +166,56 @@ EMOTION_REACTIONS: dict[str, dict] = {
+ # ═══════════════════════════════════════════════════════════════
+ 
+ POLLS = [
+-    ("📊 ¿Cómo ves el mercado hoy?", ["Bullish", "Neutral", "Bearish", "Solo observo"]),
++    ("📊 ¿Cómo ves el mercado hoy?", ["Bullish 🚀", "Neutral 😐", "Bearish 🐻", "Solo observo 👀"]),
+     ("📊 ¿Qué querés más en la comunidad?", ["Trivias", "Noticias", "Tutoriales", "AMAs"]),
++    ("📊 ¿Cuál es tu estrategia principal en crypto?", ["HODL a largo plazo 💎🙌", "Trading diario 📉📈", "Swing trading 🏄‍♂️", "Defi farming 🚜"]),
++    ("📊 ¿Qué criptomoneda tiene más futuro para vos (además de BTC/ETH)?", ["Solana (SOL)", "Cardano (ADA)", "Polkadot (DOT)", "Otra (decilo en el chat)"]),
++    ("📊 ¿Cuántas veces al día revisás tu portfolio?", ["1 vez", "2 a 5 veces", "Más de 5 veces 🥵", "Trato de no mirar 🙈"]),
++    ("📊 ¿Mantenés tus cryptos en exchanges o en billeteras propias?", ["Todo en exchange 🏦", "Todo en hardware wallet 🔐", "Mitad y mitad ⚖️", "Hot wallets (MetaMask, etc) 🦊"]),
++    ("📊 ¿Cuál fue tu primer criptomoneda?", ["Bitcoin (BTC) ₿", "Ethereum (ETH) ⟠", "Dogecoin u otra meme 🐕", "Otra"]),
++    ("📊 ¿Qué opinas de las memecoins?", ["Son divertidas y dejan plata 🤑", "Son una estafa 🚩", "Indiferente 🤷‍♂️", "Solo meto lo que puedo perder 🎲"]),
++    ("📊 ¿Cómo te informas sobre crypto?", ["Twitter/X 🐦", "Youtube 📺", "Telegram/Discord 💬", "Leyendo whitepapers 🤓"]),
++    ("📊 ¿Qué narrativa crypto te interesa más hoy?", ["Inteligencia Artificial (AI) 🤖", "Real World Assets (RWA) 🏢", "Gaming / Web3 🎮", "DePIN 📡"]),
++    ("📊 ¿Usaste alguna vez un DEX (Exchange Descentralizado)?", ["Sí, todo el tiempo 🔄", "Sí, un par de veces 🤔", "No, prefiero los CEX 🏦", "No sé qué es eso 🤨"]),
++    ("📊 ¿Creés que Bitcoin superará los 150k este ciclo?", ["Seguro que sí 🚀", "Tal vez, pero con altibajos 🎢", "No creo 🐻", "Me da igual, yo tradeo 🤝"]),
++    ("📊 ¿Te interesa participar en airdrops?", ["Sí, cazo todos los airdrops 🪂", "Solo los más seguros 🛡️", "No, mucho trabajo y riesgo 😴", "Airdrop? Qué es eso? 🧐"]),
++    ("📊 ¿Has sido víctima de alguna estafa en crypto?", ["Nunca (toco madera) 🪵", "Sí, phishing/scam 🎣", "Sí, rug pull de un proyecto 📉", "Casi, pero me di cuenta a tiempo 🕵️‍♂️"]),
++    ("📊 ¿Qué red blockchain usás más (fuera de Ethereum y Bitcoin)?", ["Solana", "Polygon / Arbitrum", "Binance Smart Chain", "Otras (Avalanche, Cosmos, etc)"]),
++    ("📊 Si tuvieras que explicarle crypto a un familiar, ¿Qué le dirías?", ["Que es el futuro del dinero 🔮", "Que es como invertir en acciones riesgosas 📉", "Le diría que no se meta todavía 🛑", "Trato de no hablarles del tema 🤐"]),
++    ("📊 ¿Qué opinas de los NFTs?", ["Tienen mucho potencial futuro 🖼️", "Son pura especulación 🫧", "Ya pasaron de moda 📉", "Tengo un par guardados por las dudas 📦"]),
++    ("📊 ¿Usas hardware wallets (Ledger, Trezor)?", ["Sí, es fundamental 🔒", "No, uso hot wallets (Metamask) 🦊", "Dejo todo en exchanges 🏦", "Planeo comprar una pronto 🛒"]),
++    ("📊 ¿Qué te parece la regulación crypto?", ["Es necesaria para masificar ⚖️", "Va en contra de la esencia de blockchain 🚫", "Me da igual 🤷‍♂️", "Depende qué regulen 🧐"]),
++    ("📊 El mercado cae un 20% en un día. ¿Qué hacés?", ["Compro el dip 🛒", "Vendo por pánico (Panic sell) 😱", "HODL, ni toco 🗿", "Me voy a llorar al rincón 😭"]),
++    ("📊 ¿Invertís en algo más aparte de criptomonedas?", ["Sí, acciones/cedears 📈", "Sí, dólares/plazo fijo 💵", "Sí, en mi propio negocio 💼", "No, 100% cripto 🚀"]),
++    ("📊 ¿Preferís Proof of Work (PoW) o Proof of Stake (PoS)?", ["Proof of Work (Seguridad) ⛏️", "Proof of Stake (Velocidad/Eco) 🌱", "No me importa mientras suba 📈", "Una mezcla de ambos ⚖️"]),
++    ("📊 ¿Cuál crees que es la mayor barrera para la adopción masiva?", ["Falta de educación 📚", "Riesgo de estafas/hacks ⚠️", "Complejidad técnica ⚙️", "Falta de regulación clara ⚖️"]),
++    ("📊 ¿A qué edad compraste tu primer crypto?", ["Menos de 18 🧒", "Entre 18 y 25 👱‍♂️", "Entre 26 y 35 🧔", "Más de 35 🧙‍♂️"]),
++    ("📊 ¿Qué porcentaje de tus ahorros está en cripto?", ["Menos del 10% 🐣", "Entre 10% y 40% 🐥", "Entre 40% y 80% 🦅", "Casi todo, all-in 🔥"]),
++    ("📊 ¿Usas la red Lightning Network de Bitcoin?", ["Sí, para micropagos ⚡", "Sé qué es pero no la usé 🧠", "Prefiero otras redes más rápidas 🏎️", "No sé qué es 🤔"]),
++    ("📊 ¿Cuál sería tu objetivo financiero con cripto?", ["Comprar una casa 🏠", "Llegar a fin de mes / Ahorro base 💼", "Independencia financiera (Jubilarme joven) 🏝️", "Solo es un hobby/juego 🎮"]),
++    ("📊 ¿Has farmeado liquidez en DeFi (Yield Farming)?", ["Sí, sigo farmeando 🚜", "Lo hice en el pasado, ya no 🔙", "No, muy riesgoso/complejo 😰", "¿DeFi qué? 🤷‍♂️"]),
++    ("📊 ¿Confías en las stablecoins algorítmicas (tipo DAI)?", ["Totalmente 🤝", "Tengo mis dudas (ej. UST) 🤨", "Prefiero USDT/USDC (respaldadas fíat) 💵", "No uso stablecoins 🚫"]),
++    ("📊 ¿Crees que las CBDCs (monedas digitales de bancos centrales) son buenas?", ["Sí, ayudarán a la digitalización 🏦", "No, son la peor herramienta de control 👁️", "Inevitable, pero preocupante ⏳", "No sigo ese tema 📰"]),
++    ("📊 Cuando el mercado está aburrido (lateraliza), ¿Qué hacés?", ["Estudio nuevos proyectos 📚", "Desconecto y hago otras cosas 🧘‍♂️", "Hago trading de rango corto ⚖️", "Sigo abriendo los charts por inercia 🧟‍♂️"]),
++    ("📊 ¿Recomendarías Beexo a tus amigos/familia?", ["¡Por supuesto, siempre lo hago! 🗣️", "Sí, a los que les interesa cripto 🤝", "Todavía no, pero tal vez pronto 🤔", "No, prefiero mantenerlo para mí 🤫"]),
++    ("📊 ¿Alguna vez perdiste la clave/seedphrase de tu wallet?", ["Sí, y perdí todo 😭", "Sí, pero pude recuperarla de suerte 😅", "Nunca, soy muy cuidadoso 🛡️", "No, pero tengo miedo de que me pase 😰"]),
++    ("📊 ¿Has comprado bienes o servicios pagando directo con cripto?", ["Sí, varias veces 🛒", "Alguna que otra p2p 🤝", "Nunca, solo las holdeó 💎", "Me gustaría poder hacerlo más seguido 🛍️"]),
++    ("📊 ¿Te interesa el desarrollo de smart contracts y programación web3?", ["Sí, estoy aprendiendo/soy dev 👨‍💻", "Me gustaría, pero parece difícil 🤯", "No, prefiero solo invertir/tradear 📈", "No es lo mío 🙅‍♂️"]),
++    ("📊 En un Bear Market profundo (todo rojo por meses), tu reacción es:", ["Depresión y borré las apps 📉", "Acumulación silenciosa 🛒", "Aburrimiento total 🥱", "Tratar de hacer short-selling 🐻"]),
++    ("📊 ¿Qué pensás de los influenciadores / 'crypto-bros' de Youtube?", ["Aportan valor y educación 🎓", "La mayoría solo vende humo o cursos 💨", "Los miro por entretenimiento 🍿", "Los ignoro por completo 🚫"]),
++    ("📊 ¿Tenés alarmas de precios configuradas en el celular?", ["Sí, para todas mis monedas 🚨", "Solo para Bitcoin/Ethereum 🔔", "No, me genera mucha ansiedad 😥", "Las tenía y las saqué 🔕"]),
++    ("📊 ¿Dejarías tu trabajo si ganas x10/x100 en un token?", ["Inmediatamente 🚪🏃‍♂️", "No, pero trabajaría más relajado 🏖️", "Lo pensaría, depende del monto final 💰", "No, me gusta lo que hago 💼"]),
++    ("📊 ¿Cuál consideras tu peor error en cripto hasta ahora?", ["Comprar en FOMO arriba de todo 📈", "Vender en pánico abajo 📉", "Entrar en una estafa / shitcoin 🚩", "No haber comprado antes ⏰"]),
++    ("📊 Si hoy te regalamos $1000 USD, ¿Qué hacés?", ["Compro Bitcoin ₿", "Compro altcoins para más riesgo 🚀", "Los dejo en stablecoins para hacer tasa 💵", "Saco la plata para gastos de la vida real 🏠"]),
++    ("📊 ¿Te interesan los airdrops en testnets (redes de prueba gratuitas)?", ["Sí, es plata gratis sin riesgo 🧪", "A veces, si el proyecto promete mucho 🔭", "No, pierdo mucho tiempo ⏳", "No entiendo cómo funcionan 🤯"]),
++    ("📊 ¿Te parece que Ethereum está perdiendo terreno frente a Solana u otros?", ["Sí, las comisiones altas lo están hundiendo 🐢", "No, ETH sigue siendo el rey de los smart contracts 👑", "Están empate, cada uno tiene su público ⚖️", "Falta mucho para ver quién gana ⏱️"]),
++    ("📊 ¿Preferís análisis técnico (gráficos) o análisis fundamental (proyecto/equipo)?", ["100% Análisis Técnico 📊", "100% Fundamental 📖", "Uso una combinación de los dos 🧩", "Solo sigo noticias e instinto 📡"]),
++    ("📊 Tus contraseñas para los exchanges, ¿son seguras?", ["Tengo 2FA y pass manager 🛡️", "Uso una contraseña segura pero la misma en varios 🔒", "Tengo contraseñas medio débiles 😬", "Las tengo en un papelito bajo el teclado 📝"]),
++    ("📊 ¿Crees que la inteligencia artificial va a impactar fuerte en el trading cripto?", ["Ya lo está haciendo (bots, análisis) 🤖", "Va a cambiar el juego por completo en un futuro 🌍", "Es solo humo por ahora 💨", "No creo que afecte demasiado 🤷‍♂️"]),
++    ("📊 Cuando comprás una cripto, ¿te fijás primero en el Market Cap o en el precio por token?", ["Market Cap siemper 📊", "Precio por token (psicología) 🪙", "Miro las dos cosas 🧐", "No me fijo, solo compro 🛒"]),
++    ("📊 Si descubren un fallo grave en Bitcoin y su precio cae a 0 por un día. ¿Qué hacés?", ["Entro en pánico y acepto la pérdida 💀", "Espero a ver qué dice la comunidad técnica 🧑‍💻", "Compro con todo lo que tengo asumiendo que lo arreglan 🛍️", "Me río por no llorar 😹"]),
++    ("📊 ¿Creés que cripto será la moneda oficial del mundo algún día?", ["Sí, Bitcoin será el estándar global 🌍", "Será una alternativa muy importante pero no la única ⚖️", "No, los gobiernos nunca lo van a permitir 🏛️", "Solo se usará para casos muy específicos 🔬"]),
++    ("📊 ¿Confiás más en la comunidad cripto hispana o en la de habla inglesa?", ["Inglesa, hay mejor info técnica 🇺🇸", "Hispana, nos ayudamos más 🇦🇷🇪🇸", "Uso ambas por igual 🌐", "No confío en nadie en cripto 🕵️‍♂️"]),
+ ]
+ 
+ # ═══════════════════════════════════════════════════════════════
+
+commit 1fdf3e10430a932d87500ee2a40a675380f003ef
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 14:29:02 2026 -0300
+
+    fix: make emotion reactions trigger more easily
+
+diff --git a/beexo-telegram-bot/handlers.py b/beexo-telegram-bot/handlers.py
+index 317de79..51754ac 100644
+--- a/beexo-telegram-bot/handlers.py
++++ b/beexo-telegram-bot/handlers.py
+@@ -143,7 +143,7 @@ async def _maybe_react_emotion(msg, text: str, context: ContextTypes.DEFAULT_TYP
+     last = bd.get(_KEY_LAST_EMOTION)
+     if last and (now - last) < timedelta(minutes=15):
+         return
+-    if len(text) < 10:
++    if len(text) < 4:
+         return
+ 
+     text_lower = text.lower()
+@@ -154,7 +154,9 @@ async def _maybe_react_emotion(msg, text: str, context: ContextTypes.DEFAULT_TYP
+             break
+     if not detected:
+         return
+-    if random.random() > 0.25:
++    
++    # 25% prob de ignorar (75% de que reaccione)
++    if random.random() > 0.75:
+         return
+ 
+     bd[_KEY_LAST_EMOTION] = now
+
+commit 00555d27478ec15457b9d96a30d0b029e466adce
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 14:26:42 2026 -0300
+
+    refactor: reduce scam and spam alert cooldown to 1 minute
+
+diff --git a/beexo-telegram-bot/config.py b/beexo-telegram-bot/config.py
+index 23db383..262d928 100644
+--- a/beexo-telegram-bot/config.py
++++ b/beexo-telegram-bot/config.py
+@@ -51,7 +51,7 @@ MEMES_DIR: str = os.path.join(_script_dir, "memes")
+ DB_PATH: str = os.path.join(_script_dir, "beexy_history.db")
+ 
+ # ── Constantes ──
+-SCAM_ALERT_COOLDOWN_MIN: int = 5
++SCAM_ALERT_COOLDOWN_MIN: int = 1
+ GEMINI_MODEL: str = "gemini-2.5-flash"
+ GEMINI_IMAGE_MODEL: str = "models/gemini-2.5-flash-image"
+ GROQ_URL: str = "https://api.groq.com/openai/v1/chat/completions"  # legacy
+
+commit 330506c2aed30d1845feac28048d1c3015562dd1
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 14:23:46 2026 -0300
+
+    feat: add vulnerable user keywords like bug and error
+
+diff --git a/beexo-telegram-bot/content.py b/beexo-telegram-bot/content.py
+index 34242f0..ddd8626 100644
+--- a/beexo-telegram-bot/content.py
++++ b/beexo-telegram-bot/content.py
+@@ -71,6 +71,7 @@ KEYWORDS_WALLET = [
+     "perdí mis fondos", "no puedo acceder", "fondos bloqueados",
+     "desbloquear", "congelaron", "frozen", "revertir transacción",
+     "recuperar fondos", "cuenta suspendida", "actualización de seguridad",
++    "bug", "problema", "error", "falla", "ayuda con",
+     # Phishing
+     "ingresá tu", "ingresa tu", "completar datos", "iniciar sesión",
+     "ingresa tu frase", "login",
+
+commit 86fb6adcd7366a84b6a19840cd7f080bac39f3c3
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 14:17:50 2026 -0300
+
+    feat: add missing scam keywords
+
+diff --git a/beexo-telegram-bot/content.py b/beexo-telegram-bot/content.py
+index c952e39..34242f0 100644
+--- a/beexo-telegram-bot/content.py
++++ b/beexo-telegram-bot/content.py
+@@ -52,23 +52,28 @@ KEYWORDS_WALLET = [
+     "dm", "privado", "por privado", "mensaje privado", "inbox",
+     # Soporte falso
+     "soporte", "soporte técnico", "support", "ayuda", "help",
+-    "admin", "administrador", "moderador",
++    "admin", "administrador", "moderador", "soporte oficial",
++    "atención al cliente", "customer service",
+     # Scams clásicos
+     "validar wallet", "verificar wallet", "sincronizar", "sync",
+     "conectar wallet", "connect wallet", "migrar", "migrate",
+-    "actualizar wallet", "upgrade",
++    "actualizar wallet", "upgrade", "wallet connect", "dapp",
++    "nodo", "node", "web3", "vincular bimetálica", "vincular wallet",
+     # Regalos / airdrops falsos
+     "airdrop", "claim", "regalo", "giveaway", "sorteo",
+-    "token gratis", "gratis", "free", "whitelist",
++    "token gratis", "gratis", "free", "whitelist", "bonus", "reward",
+     # Inversión fraudulenta
+     "inversión garantizada", "rendimiento garantizado", "duplicar",
+     "enviar para recibir", "ganancia segura", "100% profit",
++    "doblar tu inversión", "doblamos tus cryptos",
+     # Usuario vulnerable
+     "me hackearon", "hackeado", "me robaron", "robaron mis fondos",
+     "perdí mis fondos", "no puedo acceder", "fondos bloqueados",
+-    "desbloquear", "congelaron", "frozen",
++    "desbloquear", "congelaron", "frozen", "revertir transacción",
++    "recuperar fondos", "cuenta suspendida", "actualización de seguridad",
+     # Phishing
+-    "ingresá tu", "ingresa tu", "completar datos",
++    "ingresá tu", "ingresa tu", "completar datos", "iniciar sesión",
++    "ingresa tu frase", "login",
+ ]
+ 
+ KEYWORDS_SIGNALS = [
+
+commit fd66e1db2d1cbc868c6fde4c016cc3328805c85c
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 14:13:15 2026 -0300
+
+    feat: add detection and warning for trading signal groups spam
+
+diff --git a/beexo-telegram-bot/content.py b/beexo-telegram-bot/content.py
+index 91edac4..c952e39 100644
+--- a/beexo-telegram-bot/content.py
++++ b/beexo-telegram-bot/content.py
+@@ -33,6 +33,13 @@ SCAM_ALERT = (
+     "• Pedí ayuda solo en el grupo\n"
+ )
+ 
++SIGNALS_ALERT = (
++    "🚫 *ALERTA ANTI-SPAM*\n\n"
++    "• Están prohibidas las invitaciones a canales VIP o de señales.\n"
++    "• No confíes en 'bots de trading' ni rendimientos mágicos.\n"
++    "• Te recordamos que compartir enlaces no solicitados puede ser motivo de baneo.\n"
++)
++
+ KEYWORDS_WALLET = [
+     # Seed / claves
+     "seed", "seed phrase", "12 palabras", "24 palabras", "frase semilla",
+@@ -61,10 +68,20 @@ KEYWORDS_WALLET = [
+     "perdí mis fondos", "no puedo acceder", "fondos bloqueados",
+     "desbloquear", "congelaron", "frozen",
+     # Phishing
+-    "formulario", "form", "kyc", "verificar identidad",
+     "ingresá tu", "ingresa tu", "completar datos",
+ ]
+ 
++KEYWORDS_SIGNALS = [
++    # Palabras clave de grupos de señales
++    "canal de señales", "grupo de señales", "señales vip", "grupo vip",
++    "bot de trading", "trading bot", "rentabilidad diaria", "rendimiento diario",
++    "multiplica tu dinero", "ganancias aseguradas", "ganancias diarias",
++    "pump signal", "unite a mi canal", "únete a mi canal", "unite al canal",
++    "rentabilidad asegurada", "roi garantizado", "inversión segura",
++    "link en mi bio", "sumate a mi equipo", "gana dinero desde tu celular",
++    "libertad financiera", "deja que el bot trabaje por ti"
++]
++
+ # ═══════════════════════════════════════════════════════════════
+ # BIENVENIDA
+ # ═══════════════════════════════════════════════════════════════
+@@ -155,3 +172,8 @@ def contains_wallet_keywords(text: str) -> bool:
+     """Devuelve True si el texto contiene keywords relacionadas con wallets/scams."""
+     t = (text or "").lower()
+     return any(k in t for k in KEYWORDS_WALLET)
++
++def contains_signals_keywords(text: str) -> bool:
++    """Devuelve True si el texto contiene keywords relacionadas con canales de señales/spam."""
++    t = (text or "").lower()
++    return any(k in t for k in KEYWORDS_SIGNALS)
+diff --git a/beexo-telegram-bot/handlers.py b/beexo-telegram-bot/handlers.py
+index e9422c3..317de79 100644
+--- a/beexo-telegram-bot/handlers.py
++++ b/beexo-telegram-bot/handlers.py
+@@ -14,7 +14,11 @@ from telegram.constants import ParseMode
+ from telegram.ext import ContextTypes
+ 
+ from config import TZ, SCAM_ALERT_COOLDOWN_MIN, logger
+-from content import SCAM_ALERT, WELCOME_MESSAGES, EMOTION_REACTIONS, contains_wallet_keywords
++from content import (
++    SCAM_ALERT, WELCOME_MESSAGES, EMOTION_REACTIONS, 
++    contains_wallet_keywords, 
++    SIGNALS_ALERT, contains_signals_keywords
++)
+ from db import mark_reminder_fired, add_xp
+ from ai_chat import ask_ai
+ from image_tools import search_image, generate_image, detect_image_request, _mentions_real_person
+@@ -38,6 +42,7 @@ async def safe_reply(msg, text: str, **kwargs):
+ 
+ # Keys para context.bot_data
+ _KEY_LAST_SCAM = "last_scam_alert_at"
++_KEY_LAST_SIGNALS = "last_signals_alert_at"
+ _KEY_LAST_EMOTION = "last_emotion_at"
+ _KEY_WELCOMED = "recently_welcomed"
+ _KEY_BOT_INFO = "bot_info"
+@@ -246,6 +251,14 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
+             bd[_KEY_LAST_SCAM] = now
+             await safe_reply(msg, SCAM_ALERT, parse_mode=ParseMode.MARKDOWN)
+ 
++    # ── Anti-spam (Señales/Trading) ──
++    if contains_signals_keywords(text):
++        now = datetime.now(TZ)
++        last_sig = bd.get(_KEY_LAST_SIGNALS)
++        if last_sig is None or (now - last_sig) > timedelta(minutes=SCAM_ALERT_COOLDOWN_MIN):
++            bd[_KEY_LAST_SIGNALS] = now
++            await safe_reply(msg, SIGNALS_ALERT, parse_mode=ParseMode.MARKDOWN)
++
+     # ── Sistema de Experiencia (XP) ──
+     user_id = msg.from_user.id
+     user_name = msg.from_user.first_name or "Usuario"
+
+commit bbbf53cb5646020290983854664abc7a5cac8a83
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 10:26:54 2026 -0300
+
+    fix: restore missing imports for daily jobs
+
+diff --git a/beexo-telegram-bot/bot.py b/beexo-telegram-bot/bot.py
+index 562e36d..80135da 100644
+--- a/beexo-telegram-bot/bot.py
++++ b/beexo-telegram-bot/bot.py
+@@ -43,6 +43,10 @@ from jobs import (
+     morning_job,
+     night_job,
+     engagement_job,
++    daily_crypto_summary_job,
++    weekly_news_job,
++    weekly_fun_fact_job,
++    ephemerides_job,
+     auto_trivia_job,
+     time_until,
+ )
+
+commit f9b6d2ec20debc341eb6e5efd53f07b4bcd27da3
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 10:19:02 2026 -0300
+
+    chore: revert removal of manual meme command
+
+diff --git a/beexo-telegram-bot/bot.py b/beexo-telegram-bot/bot.py
+index d525bf0..562e36d 100644
+--- a/beexo-telegram-bot/bot.py
++++ b/beexo-telegram-bot/bot.py
+@@ -26,6 +26,7 @@ from commands import (
+     help_cmd,
+     rules_cmd,
+     faq_cmd,
++    meme_cmd,
+     trivia_cmd,
+     poll_cmd,
+     ask_cmd,
+@@ -61,6 +62,11 @@ async def post_init(app) -> None:
+     # Inicializar DB
+     init_db()
+ 
++    # Inicializar pool de memes
++    from meme_pool import init_pool
++    pool_count = init_pool()
++    logger.info("🎭 Pool de memes listo: %d memes disponibles", pool_count)
++
+     # Reprogramar recordatorios pendientes
+     import time as time_mod
+     now = int(time_mod.time())
+@@ -94,6 +100,7 @@ def main() -> None:
+     app.add_handler(CommandHandler("help", help_cmd))
+     app.add_handler(CommandHandler("rules", rules_cmd))
+     app.add_handler(CommandHandler("faq", faq_cmd))
++    app.add_handler(CommandHandler("meme", meme_cmd))
+     app.add_handler(CommandHandler("trivia", trivia_cmd))
+     app.add_handler(CommandHandler("poll", poll_cmd))
+     app.add_handler(CommandHandler("ask", ask_cmd))
+diff --git a/beexo-telegram-bot/commands.py b/beexo-telegram-bot/commands.py
+index 25e32de..8f670e4 100644
+--- a/beexo-telegram-bot/commands.py
++++ b/beexo-telegram-bot/commands.py
+@@ -18,6 +18,7 @@ from content import POLLS
+ from handlers import handle_image_request, reminder_fire, safe_reply
+ from db import save_report, save_reminder, get_top_users, get_user_stats
+ from ai_chat import ask_ai, COIN_ALIASES
++from meme_pool import pick_meme, use_and_replace
+ from trivias_data import TRIVIAS_DATA as TRIVIAS
+ 
+ import os
+@@ -41,6 +42,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+         "🎮 *Comunidad*\n"
+         "/trivia — Trivia cripto\n"
+         "/poll — Encuesta\n"
++        "/meme — Meme random\n"
+         "/top — Ranking de usuarios\n"
+         "/me — Tu nivel y XP\n\n"
+         "💰 *Mercado*\n"
+@@ -54,7 +56,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+         "`BeeXy dibujame un gato astronauta`\n"
+         "`BeeXy buscame una foto de bitcoin`\n\n"
+         "🤖 *Automático:* resumen diario 10am, noticias lunes 11am, "
+-        "efemérides, datos curiosos, y trivias.",
++        "efemérides, datos curiosos, memes y trivias.",
+         parse_mode=ParseMode.MARKDOWN,
+     )
+ 
+@@ -95,6 +97,25 @@ async def faq_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+ # COMANDOS DE COMUNIDAD
+ # ═══════════════════════════════════════════════════════════════
+ 
++async def meme_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
++    meme = pick_meme()
++    if meme is None:
++        await update.message.reply_text("🎭 No hay memes disponibles, se están generando nuevos...")
++        return
++
++    meme_file = meme["file"]
++    caption = f'{meme["top"]}... {meme["bottom"]}'
++    image_path = os.path.join(MEMES_DIR, meme_file)
++
++    if os.path.exists(image_path):
++        with open(image_path, "rb") as photo:
++            await update.message.reply_photo(photo=photo, caption=caption)
++    else:
++        await update.message.reply_text(caption)
++
++    # Eliminar usado y generar reemplazo
++    await use_and_replace(meme)
++
+ 
+ async def trivia_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+     t = random.choice(TRIVIAS)
+diff --git a/beexo-telegram-bot/jobs.py b/beexo-telegram-bot/jobs.py
+index c1f9cb0..cc6ad33 100644
+--- a/beexo-telegram-bot/jobs.py
++++ b/beexo-telegram-bot/jobs.py
+@@ -17,6 +17,7 @@ from chat_roles import community_chats, memes_chat
+ from content import GOOD_MORNING, GOOD_NIGHT, POLLS
+ from trivias_data import TRIVIAS_DATA as TRIVIAS
+ from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
++from meme_pool import pick_meme, use_and_replace, init_pool
+ 
+ 
+ # ═══════════════════════════════════════════════════════════════
+
+commit 64f3563577b1adbba56a3a6d833b4641cbf6e74f
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 10:17:56 2026 -0300
+
+    feat: completely remove all meme functionality
+
+diff --git a/beexo-telegram-bot/bot.py b/beexo-telegram-bot/bot.py
+index 5833eb9..d525bf0 100644
+--- a/beexo-telegram-bot/bot.py
++++ b/beexo-telegram-bot/bot.py
+@@ -26,7 +26,6 @@ from commands import (
+     help_cmd,
+     rules_cmd,
+     faq_cmd,
+-    meme_cmd,
+     trivia_cmd,
+     poll_cmd,
+     ask_cmd,
+@@ -43,13 +42,7 @@ from jobs import (
+     morning_job,
+     night_job,
+     engagement_job,
+-    schedule_daily_memes,
+-    daily_crypto_summary_job,
+-    weekly_news_job,
+-    weekly_fun_fact_job,
+-    ephemerides_job,
+     auto_trivia_job,
+-    crypto_news_meme_job,
+     time_until,
+ )
+ 
+@@ -68,11 +61,6 @@ async def post_init(app) -> None:
+     # Inicializar DB
+     init_db()
+ 
+-    # Inicializar pool de memes
+-    from meme_pool import init_pool
+-    pool_count = init_pool()
+-    logger.info("🎭 Pool de memes listo: %d memes disponibles", pool_count)
+-
+     # Reprogramar recordatorios pendientes
+     import time as time_mod
+     now = int(time_mod.time())
+@@ -106,7 +94,6 @@ def main() -> None:
+     app.add_handler(CommandHandler("help", help_cmd))
+     app.add_handler(CommandHandler("rules", rules_cmd))
+     app.add_handler(CommandHandler("faq", faq_cmd))
+-    app.add_handler(CommandHandler("meme", meme_cmd))
+     app.add_handler(CommandHandler("trivia", trivia_cmd))
+     app.add_handler(CommandHandler("poll", poll_cmd))
+     app.add_handler(CommandHandler("ask", ask_cmd))
+@@ -139,7 +126,6 @@ def main() -> None:
+     jq.run_daily(morning_job, time=time(8, 30, tzinfo=TZ), name="morning")
+     jq.run_daily(night_job, time=time(23, 0, tzinfo=TZ), name="night")
+     jq.run_daily(engagement_job, time=time(16, 0, tzinfo=TZ), name="engagement")
+-    # jq.run_daily(schedule_daily_memes, time=time(9, 0, tzinfo=TZ), name="schedule_memes")
+     jq.run_daily(daily_crypto_summary_job, time=time(10, 0, tzinfo=TZ), name="crypto_summary")
+     jq.run_daily(ephemerides_job, time=time(12, 0, tzinfo=TZ), name="ephemerides")
+ 
+@@ -150,8 +136,6 @@ def main() -> None:
+ 
+     jq.run_once(auto_trivia_job,
+                 when=time_until(time(18, 0, tzinfo=TZ)), name="auto_trivia")
+-    # jq.run_once(crypto_news_meme_job,
+-    #             when=time_until(time(14, 0, tzinfo=TZ)), name="crypto_meme")
+ 
+     logger.info("✅ BeeXy listo — %d chats configurados", len(TARGET_CHAT_IDS))
+     app.run_polling(allowed_updates=Update.ALL_TYPES)
+diff --git a/beexo-telegram-bot/commands.py b/beexo-telegram-bot/commands.py
+index 8f670e4..25e32de 100644
+--- a/beexo-telegram-bot/commands.py
++++ b/beexo-telegram-bot/commands.py
+@@ -18,7 +18,6 @@ from content import POLLS
+ from handlers import handle_image_request, reminder_fire, safe_reply
+ from db import save_report, save_reminder, get_top_users, get_user_stats
+ from ai_chat import ask_ai, COIN_ALIASES
+-from meme_pool import pick_meme, use_and_replace
+ from trivias_data import TRIVIAS_DATA as TRIVIAS
+ 
+ import os
+@@ -42,7 +41,6 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+         "🎮 *Comunidad*\n"
+         "/trivia — Trivia cripto\n"
+         "/poll — Encuesta\n"
+-        "/meme — Meme random\n"
+         "/top — Ranking de usuarios\n"
+         "/me — Tu nivel y XP\n\n"
+         "💰 *Mercado*\n"
+@@ -56,7 +54,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+         "`BeeXy dibujame un gato astronauta`\n"
+         "`BeeXy buscame una foto de bitcoin`\n\n"
+         "🤖 *Automático:* resumen diario 10am, noticias lunes 11am, "
+-        "efemérides, datos curiosos, memes y trivias.",
++        "efemérides, datos curiosos, y trivias.",
+         parse_mode=ParseMode.MARKDOWN,
+     )
+ 
+@@ -97,25 +95,6 @@ async def faq_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+ # COMANDOS DE COMUNIDAD
+ # ═══════════════════════════════════════════════════════════════
+ 
+-async def meme_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+-    meme = pick_meme()
+-    if meme is None:
+-        await update.message.reply_text("🎭 No hay memes disponibles, se están generando nuevos...")
+-        return
+-
+-    meme_file = meme["file"]
+-    caption = f'{meme["top"]}... {meme["bottom"]}'
+-    image_path = os.path.join(MEMES_DIR, meme_file)
+-
+-    if os.path.exists(image_path):
+-        with open(image_path, "rb") as photo:
+-            await update.message.reply_photo(photo=photo, caption=caption)
+-    else:
+-        await update.message.reply_text(caption)
+-
+-    # Eliminar usado y generar reemplazo
+-    await use_and_replace(meme)
+-
+ 
+ async def trivia_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+     t = random.choice(TRIVIAS)
+diff --git a/beexo-telegram-bot/jobs.py b/beexo-telegram-bot/jobs.py
+index 30eb25a..c1f9cb0 100644
+--- a/beexo-telegram-bot/jobs.py
++++ b/beexo-telegram-bot/jobs.py
+@@ -17,7 +17,6 @@ from chat_roles import community_chats, memes_chat
+ from content import GOOD_MORNING, GOOD_NIGHT, POLLS
+ from trivias_data import TRIVIAS_DATA as TRIVIAS
+ from crypto_data import CRYPTO_EPHEMERIDES, CRYPTO_FUN_FACTS
+-from meme_pool import pick_meme, use_and_replace, init_pool
+ 
+ 
+ # ═══════════════════════════════════════════════════════════════
+@@ -71,73 +70,6 @@ async def engagement_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+             )
+ 
+ 
+-# ═══════════════════════════════════════════════════════════════
+-# MEMES
+-# ═══════════════════════════════════════════════════════════════
+-
+-async def send_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+-    """Envía un meme del pool y genera un reemplazo."""
+-    meme = pick_meme()
+-    if meme is None:
+-        logger.warning("🎭 No hay memes disponibles en el pool")
+-        return
+-
+-    meme_file = meme["file"]
+-    caption = f'{meme["top"]}... {meme["bottom"]}'
+-    image_path = os.path.join(MEMES_DIR, meme_file)
+-
+-    if os.path.exists(image_path):
+-        with open(image_path, "rb") as photo:
+-            for cid in memes_chat():
+-                photo.seek(0)
+-                await context.bot.send_photo(chat_id=cid, photo=photo, caption=caption)
+-    else:
+-        for cid in memes_chat():
+-            await context.bot.send_message(chat_id=cid, text=caption)
+-
+-    logger.info("🎭 Meme enviado: %s", meme_file)
+-
+-    # Eliminar usado y generar reemplazo vía Groq
+-    await use_and_replace(meme)
+-
+-
+-async def schedule_daily_memes(context: ContextTypes.DEFAULT_TYPE) -> None:
+-    """Planifica 2 memes a horas aleatorias del día (entre 9:00 y 22:00)."""
+-    hours = sorted(random.sample(range(9, 22), 2))
+-    for h in hours:
+-        minute = random.randint(0, 59)
+-        send_time = time(h, minute, tzinfo=TZ)
+-        context.job_queue.run_once(
+-            send_meme_job, when=time_until(send_time),
+-            name=f"meme_diario_{h}_{minute}",
+-        )
+-        logger.info("🎭 Meme programado para hoy a las %02d:%02d", h, minute)
+-
+-
+-async def crypto_news_meme_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+-    """Genera un meme de alta calidad con IA basado en noticias cripto."""
+-    try:
+-        from crypto_news_meme import generate_news_meme
+-        logger.info("📰 Generando meme de noticias cripto con IA...")
+-        path, caption = await generate_news_meme()
+-        if path and os.path.exists(path):
+-            with open(path, "rb") as photo:
+-                for cid in memes_chat():
+-                    photo.seek(0)
+-                    await context.bot.send_photo(
+-                        chat_id=cid, photo=photo, caption=caption,
+-                        parse_mode=ParseMode.MARKDOWN,
+-                    )
+-            logger.info("📰 Meme cripto IA enviado: %s", os.path.basename(path))
+-        else:
+-            logger.info("📰 No se pudo generar meme cripto")
+-    except Exception as e:
+-        logger.warning("⚠️ Error en crypto_news_meme_job: %s", e)
+-    finally:
+-        next_delay = random.uniform(18, 28) * 3600
+-        context.job_queue.run_once(crypto_news_meme_job, when=next_delay, name="crypto_meme")
+-        logger.info("📰 Próximo meme cripto en %.1f horas", next_delay / 3600)
+-
+ 
+ # ═══════════════════════════════════════════════════════════════
+ # RESUMEN CRIPTO DIARIO
+
+commit f2dbd7a509c3d423d5b99d65187e8209787fca17
+Author: tavanofede-png <tavanofede@gmail.com>
+Date:   Sun Feb 22 10:03:49 2026 -0300
+
+    fix: prevent empty daily crypto summary if api fails
+
+diff --git a/beexo-telegram-bot/jobs.py b/beexo-telegram-bot/jobs.py
+index 2270e0f..30eb25a 100644
+--- a/beexo-telegram-bot/jobs.py
++++ b/beexo-telegram-bot/jobs.py
+@@ -166,6 +166,7 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+         "dogecoin": ("DOGE", "🐕"), "polkadot": ("DOT", "⬡"),
+     }
+     lines = ["📊 *Resumen Diario del Mercado Cripto*\n"]
++    valid_coins = 0
+     for coin_id, (symbol, icon) in coins_map.items():
+         if coin_id in data:
+             d = data[coin_id]
+@@ -177,6 +178,12 @@ async def daily_crypto_summary_job(context: ContextTypes.DEFAULT_TYPE) -> None:
+                 lines.append(f"{emoji} {icon} *{symbol}*: ${price:,.2f} ({sign}{change:.1f}%)")
+             else:
+                 lines.append(f"{emoji} {icon} *{symbol}*: ${price:.4f} ({sign}{change:.1f}%)")
++            valid_coins += 1
++            
++    if valid_coins == 0:
++        logger.warning("📊 Resumen cripto diario cancleado: No se obtuvieron datos de precios válidos.")
++        return
++
+     lines.append(f"\n_Actualizado: {datetime.now(TZ).strftime('%d/%m/%Y %H:%M')}_")
+     for cid in community_chats():
+         await context.bot.send_message(

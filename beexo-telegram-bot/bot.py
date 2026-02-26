@@ -134,19 +134,21 @@ def main() -> None:
     # ── Jobs programados ──
     jq = app.job_queue
 
-    jq.run_daily(morning_job, time=time(8, 30, tzinfo=TZ), name="morning")
-    jq.run_daily(night_job, time=time(23, 0, tzinfo=TZ), name="night")
-    jq.run_daily(engagement_job, time=time(16, 0, tzinfo=TZ), name="engagement")
+    jq.run_daily(morning_job, time=time(8, 0, tzinfo=TZ), name="morning")
+    jq.run_daily(night_job, time=time(22, 0, tzinfo=TZ), name="night")
+    jq.run_daily(engagement_job, time=time(19, 30, tzinfo=TZ), days=(0, 2, 4, 6), name="engagement")
     jq.run_daily(daily_crypto_summary_job, time=time(10, 0, tzinfo=TZ), name="crypto_summary")
-    jq.run_daily(ephemerides_job, time=time(12, 0, tzinfo=TZ), name="ephemerides")
+    jq.run_daily(ephemerides_job, time=time(9, 30, tzinfo=TZ), name="ephemerides")
 
     jq.run_daily(weekly_news_job, time=time(11, 0, tzinfo=TZ),
                  days=(0,), name="weekly_news")  # 0 = lunes
-    jq.run_repeating(weekly_fun_fact_job, interval=5 * 86400,
-                     first=time_until(time(15, 0, tzinfo=TZ)), name="fun_fact")
+    
+    jq.run_daily(weekly_fun_fact_job, time=time(15, 0, tzinfo=TZ),
+                 days=(2,), name="fun_fact")
 
-    jq.run_once(auto_trivia_job,
-                when=time_until(time(18, 0, tzinfo=TZ)), name="auto_trivia")
+    import random
+    trivia_delay = random.uniform(6, 24) * 3600
+    jq.run_once(auto_trivia_job, when=trivia_delay, name="auto_trivia")
 
     logger.info("✅ BeeXy listo — %d chats configurados", len(TARGET_CHAT_IDS))
     app.run_polling(allowed_updates=Update.ALL_TYPES)
